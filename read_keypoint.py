@@ -9,6 +9,13 @@ from keras.layers.merge import Concatenate
 from config_reader import config_reader
 import scipy
 import math
+import cv2
+import matplotlib
+import pylab as plt
+import numpy as np
+import util
+from scipy.ndimage.filters import gaussian_filter
+
 
 
 def relu(x):
@@ -130,17 +137,23 @@ model = Model(img_input, [stageT_branch1_out, stageT_branch2_out])
 model.load_weights(weights_path)
 
 
-from scipy.ndimage.filters import gaussian_filter
+
 
 
 test_image = './keras_Realtime_Multi-Person_Pose_Estimation/sample_images/deepfashion.jpg'
 oriImg = cv2.imread(test_image) # B,G,R order
 oriImg = np.expand_dims(oriImg, axis=0)
-prediction = model.predict(feed)
-print(feed.shape)
+prediction = model.predict(oriImg)
+print(oriImg.shape)
 output_blob = prediction
 heatmap = np.squeeze(output_blob[1])
 heatmap = cv2.resize(heatmap, (0,0), fx=8, fy=8, interpolation=cv2.INTER_CUBIC)
+
+# multiplier = [x * 368 / oriImg.shape[0] for x in (0.5, 1, 1.5, 2)]
+# scale = multiplier[0]
+# imageToTest = cv2.resize(oriImg, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+imageToTest = oriImg
+imageToTest_padded, pad = util.padRightDownCorner(imageToTest, 8, 128)
 heatmap = heatmap[:imageToTest_padded.shape[0]-pad[2], :imageToTest_padded.shape[1]-pad[3], :]
 heatmap = cv2.resize(heatmap, (oriImg.shape[1], oriImg.shape[0]), interpolation=cv2.INTER_CUBIC)
 print(heatmap.shape)
@@ -162,7 +175,7 @@ for part in range(19-1):
     map_up[:,1:] = map[:,:-1]
     map_down = np.zeros(map.shape)
     map_down[:,:-1] = map[:,1:]
-    peaks_binary = np.logical_and.reduce((map>=map_left, map>=map_right, map>=map_up, map>=map_down, map > param['thre1']))
+    peaks_binary = np.logical_and.reduce((map>=map_left, map>=map_right, map>=map_up, map>=map_down, map > 0.1))
     peaks = list(zip(np.nonzero(peaks_binary)[1], np.nonzero(peaks_binary)[0])) # note reverse
     peaks_with_score = [x + (map_ori[x[1],x[0]],) for x in peaks]
     id = range(peak_counter, peak_counter + len(peaks))
