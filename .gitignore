@@ -1,2 +1,4 @@
 .idea/*
 *.h5
+.DS_Store
+__pycache__/
