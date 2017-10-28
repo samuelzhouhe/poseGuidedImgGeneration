@@ -5,6 +5,8 @@ import random
 import cv2
 from config import cfg
 
+WEIGHT_DECAY = cfg.WEIGHT_DECAY
+
 def decorated_layer(layer):
 	def wrapper(self, *args,  **kwargs):
 		name = kwargs.setdefault('name', self.get_unique_name(layer.__name__))
@@ -56,7 +58,7 @@ class Network(object):
 			
 		return self
 
-	def l2_regularizer(self, weight_decay = 0.0005, scope = None):
+	def l2_regularizer(self, weight_decay = WEIGHT_DECAY, scope = None):
 		def regularizer(tensor):
 			with tf.name_scope(scope, default_name='l2_regularizer',values=[tensor]):
 				l2_weight = tf.convert_to_tensor(weight_decay, dtype = tensor.dtype.base_dtype, name='weight_decay')

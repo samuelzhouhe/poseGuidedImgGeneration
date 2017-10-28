@@ -103,7 +103,7 @@ class Pose_GAN(Network):
 			 .add(name = 'back_add_6')
 			 .conv2d_tran(3, 3, 1, 1, name = 'g1_result'))
 
-		#=============G1 encoder============
+		#=============G2 encoder============
 		print('=============G2 encoder=============')
 		(self.feed('g2_input', 'g1_result')
 			 .concatenate(name = 'concat', axis = -1)
@@ -127,8 +127,8 @@ class Pose_GAN(Network):
 			 .conv2d(3, 512, 1, 1, name = 'g2_middle_conv2'))
 
 
-		#=============G1 decoder============
-		print('=============G1 decoder=============')
+		#=============G2 decoder============
+		print('=============G2 decoder=============')
 		(self.feed('g2_down_sample3', 'g2_middle_conv2')
 			 .add(name = 'g2_add_4')
 			 .conv2d_tran(3, 384, 2, 2, name = 'g2_up_sample1', relu = False))
