@@ -197,9 +197,9 @@ class Network(object):
 		return tf.add(input_data[0], input_data[1], name = name)
 
 	@decorated_layer
-	def concatenate(self, input_data, name):
+	def concatenate(self, input_data, name, axis = 1):
 		assert len(input_data) >= 2
-		return tf.concat(input_data, axis = 1)
+		return tf.concat(input_data, axis = axis)
 
 	@decorated_layer
 	def weight_sum(self, input_data, name, collection, stddev = 0.1):
