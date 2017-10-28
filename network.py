@@ -56,9 +56,17 @@ class Network(object):
 			
 		return self
 
+	def l2_regularizer(self, weight_decay = 0.0005, scope = None):
+		def regularizer(tensor):
+			with tf.name_scope(scope, default_name='l2_regularizer',values=[tensor]):
+				l2_weight = tf.convert_to_tensor(weight_decay, dtype = tensor.dtype.base_dtype, name='weight_decay')
+				return tf.multiply(l2_weight, tf.nn.l2_loss(tensor), name='value')
+		return regularizer
+
 	def weight_variable(self, shape, variable_name, scope, collection):
+		regularizer = self.l2_regularizer(scope = scope)
 		with tf.name_scope('weight'):
-			var = tf.get_variable(scope + '/' + variable_name, shape = shape, collections = collection)
+			var = tf.get_variable(scope + '/' + variable_name, shape = shape, collections = collection, regularizer = regularizer)
 			tf.summary.histogram(scope + '/weight', var)
 			return var
 
