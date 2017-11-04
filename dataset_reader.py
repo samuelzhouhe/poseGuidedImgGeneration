@@ -48,13 +48,24 @@ class DataLoader:
                                 keypoint = keypoints[i]
                                 if len(keypoint)!=0:    # a non-empty keypoint is a list consists of one and only one tuple.
                                     heatmap[:,:,i] = cv2.circle(np.zeros([256,256]), (keypoint[0][0], keypoint[0][1]), 4,255, -1)
+                                    cv2.circle(mapofAllPoints, (keypoint[0][0], keypoint[0][1]), 4,255, -1)
                                     pass
+
+                                
+
+
                         heatmap = np.expand_dims(heatmap, axis=0)
                         heatmap_flippedimg = np.flip(heatmap, axis=2)
 
-
-
-
+                        kernel = np.asarray([
+                            [0, 0, 1, 0, 0],
+                            [0, 1, 1, 1, 0],
+                            [1, 1, 1, 1, 1],
+                            [0, 1, 1, 1, 0],
+                            [0, 0, 1, 0, 0]], dtype=np.uint8)
+                        print(kernel)
+                        dilatedMapofAllPoints = cv2.dilate(mapofAllPoints, kernel, iterations=9)
+                        dilatedMapofAllPoints_flipped = np.flip(dilatedMapofAllPoints,axis=1)
 
 
                         # add both images and heatmaps to the their respective grand ndarrays

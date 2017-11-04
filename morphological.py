@@ -16,4 +16,3 @@ dilation = cv2.dilate(img,kernel,iterations = 9)
 cv2.imwrite('dilated.png',dilation)	
 # cv2.imwrite('closing.png',output)
 
-def morphological_process(img):
