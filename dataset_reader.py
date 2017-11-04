@@ -101,4 +101,17 @@ class DataLoader:
     def next_batch(self, batch_size):
         pass
 
+        num_sample = images.shape[0]
+        idx = np.arange(0, num_sample)
+        np.random.shuffle(idx)
+        idx = idx[ : batch_size]
+        img_batch = images[idx]
+        hm_batch = heatmaps[idx]
+        # (batch_size, 256, 256)
+        mor_batch = morphologicals[idx]
+        # (batch_size, 256, 256, 3+18)
+        img_hm_batch = np.concatenate((img_batch, hm_batch), axis=3)
+
+        return img_hm_batch, mor_batch
+
 loader = DataLoader()
