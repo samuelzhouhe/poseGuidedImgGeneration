@@ -6,13 +6,12 @@ class Pose_GAN(Network):
 	def __init__(self):
 		self.inputs = []
 		self.g1_input = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.G1_INPUT_DATA_SHAPE, name = 'g1_input')
-		self.g2_input = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE, name = 'g2_input')
-		self.da_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'da_input')
-		self.db_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'db_input')
+		self.ia_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'ia_input')
+		self.ib_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'ib_input')
 		self.N = cfg.N
 		self.im_width = cfg.G1_INPUT_DATA_SHAPE[1]
 		self.im_height = cfg.G1_INPUT_DATA_SHAPE[0]
-		self.layers = {'g1_input': self.g1_input, 'g2_input': self.g2_input, 'da_input': self.da_input, 'db_input': self.db_input}
+		self.layers = {'g1_input': self.g1_input, 'ia_input': self.ia_input, 'ib_input': self.ib_input}
 		self.__setup()
 
 	def __setup(self):
@@ -107,7 +106,7 @@ class Pose_GAN(Network):
 
 		#=============G2 encoder============
 		print('=============G2 encoder=============')
-		(self.feed('g2_input', 'g1_result')
+		(self.feed('ia_input', 'g1_result')
 			 .concatenate(name = 'concat', axis = -1)
 			 .conv2d(3, 128, 1, 1, name = 'conv_g2')
 			 .conv2d(3, 128, 1, 1, name = 'g2_block1_conv1')
@@ -158,7 +157,7 @@ class Pose_GAN(Network):
 
 		#=============Discriminator============
 		print('=============Discriminator=============')
-		(self.feed('da_input', 'db_input')
+		(self.feed('ia_input', 'ib_input')
 			 .concatenate(name = 'd_real_input', axis = -1)
 			 .conv2d(5, 64, 2, 2, name = 'd_real_conv1', scope = 'd_conv_1', relu = False, reuse = False)
 			 .leaky_relu(name = 'd_real_lrelu1')
@@ -173,7 +172,7 @@ class Pose_GAN(Network):
 			 .leaky_relu(name = 'd_real_lrelu4')
 			 .fc(1, name = 'logit_real', scope = 'logit', relu = False, reuse = False))
 
-		(self.feed('da_input', 'g2_result')
+		(self.feed('ia_input', 'g2_result')
 			 .concatenate(name = 'd_fake_input', axis = -1)
 			 .conv2d(5, 64, 2, 2, name = 'd_fake_conv1', scope = 'd_conv_1', relu = False)
 			 .leaky_relu(name = 'd_fake_lrelu1')
@@ -208,26 +207,13 @@ class Pose_GAN(Network):
 		return self.layers['final_output']
 
 	@property
-	def g1_input(self):
-		return self.layers['g1_input']
-
-	@property
-	def g2_input(self):
-		return self.layers['g2_input']
-
-	@property
-	def da_input(self):
-		return self.layers['da_input']
-
-	@property
-	def db_input(self):
-		return self.layers['db_input']
+	def mb_plus_1(self):
+		return self.layers['mb_plus_1']
 
 	def build_loss(self):
 		#=============g1 loss============
-		self.layers['ib'] = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE, name = 'ib')
 		self.layers['mb_plus_1'] = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE[:2] + [1], name = 'mb_plus_1')
-		l1_distance = tf.abs(tf.multiply(self.layers['g1_result'] - self.layers['ib'], self.layers['mb_plus_1']))
+		l1_distance = tf.abs(tf.multiply(self.layers['g1_result'] - self.layers['ib_input'], self.layers['mb_plus_1']))
 
 		self.layers['g1_loss'] = tf.reduce_mean(tf.reduce_sum(l1_distance, axis = [1, 2, 3]))
 		
@@ -242,7 +228,7 @@ class Pose_GAN(Network):
 		(self.feed('logit_fake')
 			 .sigmoid(name = 'g2_adv_loss', labels = tf.ones_like(self.layers['logit_fake']), loss = True))
 
-		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['g2_result'] - self.layers['ib'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
+		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['g2_result'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
 		self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 
 		return self.layers['g1_loss'], self.layers['g2_loss'], self.layers['d_loss']
