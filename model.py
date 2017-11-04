@@ -9,11 +9,10 @@ class Pose_GAN(Network):
 		self.g2_input = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE, name = 'g2_input')
 		self.da_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'da_input')
 		self.db_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'db_input')
-		self.d_label = tf.placeholder(tf.float32, shape = [None], name = 'd_label')
 		self.N = cfg.N
 		self.im_width = cfg.G1_INPUT_DATA_SHAPE[1]
 		self.im_height = cfg.G1_INPUT_DATA_SHAPE[0]
-		self.layers = {'g1_input': self.g1_input, 'g2_input': self.g2_input, 'da_input': self.da_input, 'db_input': self.db_input, 'd_label': self.d_label}
+		self.layers = {'g1_input': self.g1_input, 'g2_input': self.g2_input, 'da_input': self.da_input, 'db_input': self.db_input}
 		self.__setup()
 
 	def __setup(self):
@@ -208,6 +207,22 @@ class Pose_GAN(Network):
 	def final_output(self):
 		return self.layers['final_output']
 
+	@property
+	def g1_input(self):
+		return self.layers['g1_input']
+
+	@property
+	def g2_input(self):
+		return self.layers['g2_input']
+
+	@property
+	def da_input(self):
+		return self.layers['da_input']
+
+	@property
+	def db_input(self):
+		return self.layers['db_input']
+
 	def build_loss(self):
 		#=============g1 loss============
 		self.layers['ib'] = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE, name = 'ib')
@@ -231,7 +246,7 @@ class Pose_GAN(Network):
 		self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 
 		return self.layers['g1_loss'], self.layers['g2_loss'], self.layers['d_loss']
-		
+
 if __name__ == '__main__':
 	model = Pose_GAN()
 	a, b, c = model.build_loss()

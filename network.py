@@ -214,10 +214,6 @@ class Network(object):
 		return tf.nn.dropout(input_data, keep_prob = kp, name = name)
 
 	@decorated_layer
-	def extract_last_box(self, input_data, name):
-		return input_data[-1, :]
-
-	@decorated_layer
 	def producer(self, input_data, output_queue, name):
 		output_queue.put(input_data)
 		return input_data
@@ -259,13 +255,6 @@ class Network(object):
 	def setup(self):
 		raise NotImplementedError('Function setup(self) must be implemented!')
 
-			
-	def train_model(self, epoch, ckpt_path):
-		raise NotImplementedError('Function train_model(self, epoch, ckpt_path) must be implemented!')
-
-			
-	def im_detect(self, img):
-		raise NotImplementedError('Function im_detect(self, img) must be implemented!')
 
 	def get_unique_name(self, layer_name):
 		count = len([name for name, _ in self.layers.items() if name.startswith(layer_name)])
