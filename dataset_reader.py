@@ -118,9 +118,8 @@ class DataLoader:
             target_pose[i, :, :, :] = self.heatmaps[indexof_targetimg, :, :, :]
             target_image[i, :, :, :] = self.images[indexof_targetimg, :, :, :]
             target_morphologicals[i, :, :] = self.morphologicals[indexof_targetimg, :, :]
-
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
-        return g1_feed, target_image, target_morphologicals
+        return g1_feed, conditional_image,target_image, target_morphologicals
 
 
 loader = DataLoader()
