@@ -16,6 +16,8 @@ import numpy as np
 import util
 import time
 from scipy.ndimage.filters import gaussian_filter
+import os
+import pickle
 
 ROOTDIR = "./Img_minibatch"
 
@@ -108,11 +110,13 @@ def stageT_block(x, num_p, stage, branch):
 
     return x
 
-def get_keypoints(img_path, model):
+
+# this function takes the images already read by cv2.
+def get_keypoints(oriImg, model):
 
     # heatmap
 
-    oriImg = cv2.imread(img_path) # B,G,R order
+    # oriImg = cv2.imread(img_path) # B,G,R order
 
     multiplier = [x * 368 / oriImg.shape[0] for x in (0.5, 1, 1.5, 2)]
     heatmap_avg = np.zeros((oriImg.shape[0], oriImg.shape[1], 19))
@@ -192,9 +196,18 @@ if __name__ == "__main__":
 
     img_path = './keras_Realtime_Multi-Person_Pose_Estimation/sample_images/deepfashion.jpg'
     start_time = time.time()
-    keypoints = get_keypoints(img_path, model)
-    print(time.time() - start_time)
-    print(keypoints)
+
+    for root, dirs, files in os.walk(ROOTDIR, topdown=True):
+        # same directory
+        # code2index = {}  # code is 01/02/03 etc. Index is 0 through 50000
+        for file in files:
+            fulldir = root + '/' + file
+            if not "flat" in file:
+                img = cv2.imread(fulldir)
+                if img is not None:
+                    keypoints = get_keypoints(img, model)
+                    with open (fulldir+'keypoints','wb') as file:
+                        pickle.dump(keypoints, file)
 
 
 
