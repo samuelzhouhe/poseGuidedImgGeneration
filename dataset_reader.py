@@ -13,17 +13,14 @@ ROOTDIR = "./Img_minibatch/img/MEN/Denim"
 
 class DataLoader:
     images = None  # (?,256,256,3)
-    heatmaps = None  # (?,256,256,18)
+    heatmaps = None  # (?,256,256,18) (also known as "poses")
     morphologicals = None  # (?,256,256)
     pairs = []
     groupsofIndices = []
 
     def __init__(self):
         print("Initializing DeepFashion Dataset Loader...")
-        self._read_images()
-
-    def _read_images(self):
-        self.images = self._getData()
+        self._getData()
 
     def _getData(self):
         for root, dirs, files in os.walk(ROOTDIR, topdown=True):
@@ -64,27 +61,31 @@ class DataLoader:
                                      (8, 9), (9, 10), (8, 11), (11, 12), (12, 13)]
                             for link in links:
                                 if link[0] in availablePoints and link[1] in availablePoints:
-                                    point1 = (keypoints[link[0]][0][0],keypoints[link[0]][0][1])
-                                    point2 = (keypoints[link[1]][0][0],keypoints[link[1]][0][1])
-                                    cv2.line(mapofAllPoints,point1,point2,255,10)
+                                    point1 = (keypoints[link[0]][0][0], keypoints[link[0]][0][1])
+                                    point2 = (keypoints[link[1]][0][0], keypoints[link[1]][0][1])
+                                    cv2.line(mapofAllPoints, point1, point2, 255, 10)
 
-
-                        kernel = np.asarray([[1,1,1],[1,1,1],[1,1,1]],dtype=np.uint8)
+                        kernel = np.asarray([[1, 1, 1], [1, 1, 1], [1, 1, 1]], dtype=np.uint8)
                         dilatedMapofAllPoints = cv2.dilate(mapofAllPoints, kernel, iterations=6)
+                        # quantize it into 1 and 2 (0 becomes 1, 255 becomes 2)
+                        dilatedMapofAllPoints[dilatedMapofAllPoints == 0] = 1
+                        dilatedMapofAllPoints[dilatedMapofAllPoints == 255] = 2
 
                         heatmap = np.expand_dims(heatmap, axis=0)
                         heatmap_flippedimg = np.flip(heatmap, axis=2)
-                        dilatedMapofAllPoints = np.expand_dims(dilatedMapofAllPoints,axis=0)
-                        dilatedMapofAllPoints_flipped = np.flip(dilatedMapofAllPoints,axis=2)
+                        dilatedMapofAllPoints = np.expand_dims(dilatedMapofAllPoints, axis=0)
+                        dilatedMapofAllPoints_flipped = np.flip(dilatedMapofAllPoints, axis=2)
                         # add both images and heatmaps to the their respective grand ndarrays
                         if self.images is None:
                             self.images = np.concatenate([img, flippedImg], axis=0)
                             self.heatmaps = np.concatenate([heatmap, heatmap_flippedimg], axis=0)
-                            self.morphologicals = np.concatenate([dilatedMapofAllPoints,dilatedMapofAllPoints_flipped],axis=0)
+                            self.morphologicals = np.concatenate([dilatedMapofAllPoints, dilatedMapofAllPoints_flipped],
+                                                                 axis=0)
                         else:
                             self.images = np.concatenate([self.images, img, flippedImg], axis=0)
                             self.heatmaps = np.concatenate([self.heatmaps, heatmap, heatmap_flippedimg], axis=0)
-                            self.morphologicals = np.concatenate([self.morphologicals,dilatedMapofAllPoints,dilatedMapofAllPoints_flipped],axis=0)
+                            self.morphologicals = np.concatenate(
+                                [self.morphologicals, dilatedMapofAllPoints, dilatedMapofAllPoints_flipped], axis=0)
                         # code means "which variation of this cloth". Only clothes with the same code are deemed a PAIR.
                         code = file[0:2]
                         if code in code2index:
@@ -101,21 +102,26 @@ class DataLoader:
             self.pairs.append(list(itertools.combinations(group, 2)))
         self.pairs = list(itertools.chain.from_iterable(self.pairs))
 
-        print(self.pairs)
-
     def next_batch(self, batch_size):
-        num_sample = images.shape[0]
-        idx = np.arange(0, num_sample)
+        num_pairs = len(self.pairs)
+        idx = np.arange(0, num_pairs)
         np.random.shuffle(idx)
         idx = idx[: batch_size]
-        img_batch = images[idx]
-        hm_batch = heatmaps[idx]
-        # (batch_size, 256, 256)
-        mor_batch = morphologicals[idx]
-        # (batch_size, 256, 256, 3+18)
-        img_hm_batch = np.concatenate((img_batch, hm_batch), axis=3)
+        conditional_image = np.zeros([batch_size, 256, 256, 3])
+        target_pose = np.zeros([batch_size, 256, 256, 18])
+        target_image = np.zeros([batch_size, 256, 256, 3])
+        target_morphologicals = np.zeros([batch_size, 256, 256])
+        for i in range(batch_size):
+            indexof_condimg = self.pairs[idx[i]][0]
+            indexof_targetimg = self.pairs[idx[i]][1]
+            conditional_image[i, :, :, :] = self.images[indexof_condimg, :, :, :]
+            target_pose[i, :, :, :] = self.heatmaps[indexof_targetimg, :, :, :]
+            target_image[i, :, :, :] = self.images[indexof_targetimg, :, :, :]
+            target_morphologicals[i, :, :] = self.morphologicals[indexof_targetimg, :, :]
 
-        return img_hm_batch, mor_batch,
+        g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
+        return g1_feed, target_image, target_morphologicals
 
 
 loader = DataLoader()
+a, b, c = loader.next_batch(4)
