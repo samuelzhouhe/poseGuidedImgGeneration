@@ -9,6 +9,6 @@ cfg.BATCH_SIZE = 8
 cfg.N = 6  # number of resudual blocks
 cfg.WEIGHT_DECAY = 0.005
 cfg.LAMBDA = 10
-cfg.MAXITERATION = 1000000
+cfg.MAXITERATION = 100
 cfg.LOGDIR = './logs'
 cfg.MODE = 'train'
