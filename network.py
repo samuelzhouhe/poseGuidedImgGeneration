@@ -65,15 +65,15 @@ class Network(object):
 				return tf.multiply(l2_weight, tf.nn.l2_loss(tensor), name='value')
 		return regularizer
 
-	def weight_variable(self, shape, variable_name, scope, collection):
+	def weight_variable(self, shape, variable_name, scope, collection, reuse):
 		regularizer = self.l2_regularizer(scope = scope)
-		with tf.name_scope('weight'):
+		with tf.variable_scope('weight', reuse = reuse):
 			var = tf.get_variable(scope + '/' + variable_name, shape = shape, collections = collection, regularizer = regularizer)
 			tf.summary.histogram(scope + '/weight', var)
 			return var
 
-	def bias_variable(self, shape, variable_name, scope, collection):
-		with tf.name_scope('bias'):
+	def bias_variable(self, shape, variable_name, scope, collection, reuse):
+		with tf.variable_scope('bias', reuse = reuse):
 			var = tf.get_variable(scope + '/' + variable_name, shape = shape, collections = collection)
 			tf.summary.histogram(scope + '/bias', var)
 			return var
@@ -88,16 +88,19 @@ class Network(object):
 
 
 	@decorated_layer
-	def conv2d(self, input_data, k_w, k_d, s_w, s_h, name, collection = None, scope = None, relu = True, padding = 'SAME', appendList = None):
+	def conv2d(self, input_data, k_w, k_d, s_w, s_h, name, collection = None, scope = None, relu = True, padding = 'SAME', appendList = None, reuse = None):
 
 		depth = input_data.get_shape().as_list()[-1]
+		if reuse is None and not scope is None:
+			reuse = True
 
 		if scope is None:
 			scope = name
+
 		#kernel
 		with tf.name_scope(scope):
-			kernel = self.weight_variable([k_w, k_w, depth, k_d], 'kernel', scope, collection)
-			bias = self.bias_variable([k_d], 'b', scope, collection)
+			kernel = self.weight_variable([k_w, k_w, depth, k_d], 'kernel', scope, collection, reuse = reuse)
+			bias = self.bias_variable([k_d], 'b', scope, collection, reuse = reuse)
 			conv2d = tf.nn.conv2d(input_data, kernel, strides = [1, s_h, s_w, 1], padding = padding)
 
 			self.__append(appendList, [kernel, bias])
@@ -113,9 +116,12 @@ class Network(object):
 		return tf.reshape(input_data, data_shape)
 
 	@decorated_layer
-	def conv2d_tran(self, input_data, k_w, k_d, s_w, s_h, name, output_shape = None, scope = None, collection = None, relu = True, padding = 'SAME', appendList = None):
+	def conv2d_tran(self, input_data, k_w, k_d, s_w, s_h, name, output_shape = None, scope = None, collection = None, relu = True, padding = 'SAME', appendList = None, reuse = None):
 
 		depth = input_data.get_shape().as_list()[-1]
+
+		if reuse is None and not scope is None:
+			reuse = True
 
 		if scope is None:
 			scope = name
@@ -127,10 +133,11 @@ class Network(object):
 			output_shape[2] *= s_w
 			output_shape[3] = k_d
 
+
 		#kernel
 		with tf.name_scope(scope):
-			kernel = self.weight_variable([k_w, k_w, k_d, depth], 'kernel', scope, collection)
-			bias = self.bias_variable([k_d], 'b', scope, collection)
+			kernel = self.weight_variable([k_w, k_w, k_d, depth], 'kernel', scope, collection, reuse = reuse)
+			bias = self.bias_variable([k_d], 'b', scope, collection, reuse = reuse)
 			conv2d = tf.nn.conv2d_transpose(input_data, kernel, output_shape, strides = [1, s_h, s_w, 1], padding = padding)
 
 			self.__append(appendList, [kernel, bias])
@@ -146,11 +153,15 @@ class Network(object):
 
 
 	@decorated_layer
-	def fc(self, input_data, output_dim, name, collection = None, scope = None, relu = True, appendList = None):
+	def fc(self, input_data, output_dim, name, collection = None, scope = None, relu = True, appendList = None, reuse = None):
 		assert not isinstance(input_data, list)
+
+		if reuse is None and not scope is None:
+			reuse = True
 
 		if scope is None:
 			scope = name
+
 
 		shape = input_data.get_shape().as_list()
 		
@@ -163,8 +174,8 @@ class Network(object):
 			if len(shape) == 4:
 				input_data = tf.reshape(input_data, [-1, size])
 		
-			w = self.weight_variable([size, output_dim], 'w', scope, collection)
-			b = self.bias_variable([output_dim], 'b', scope, collection)
+			w = self.weight_variable([size, output_dim], 'w', scope, collection, reuse = reuse)
+			b = self.bias_variable([output_dim], 'b', scope, collection, reuse = reuse)
 
 			self.__append(appendList, [w, b])
 
@@ -185,6 +196,16 @@ class Network(object):
 			return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = labels, logits = input_data), name = name)
 		else:
 			return tf.nn.softmax(input_data, name = name)
+
+	@decorated_layer
+	def sigmoid(self, input_data, name, labels = None, loss = True):
+		if loss:
+			if labels is None:
+				labels = self.layers['label']
+			return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = input_data, labels = labels), name = name)
+		else:
+			return tf.nn.sigmoid(input_data, name = name)
+		
 
 	@decorated_layer
 	def drop_out(self, input_data, name, keep_prob_name):
@@ -212,6 +233,10 @@ class Network(object):
 		return tf.concat(input_data, axis = axis)
 
 	@decorated_layer
+	def leaky_relu(self, input_data, name, alpha = 0.2):
+		return tf.nn.relu(input_data) - alpha * tf.nn.relu(-input_data)
+
+	@decorated_layer
 	def weight_sum(self, input_data, name, collection, stddev = 0.1):
 		shape = input_data[0].get_shape().as_list()
 		for data in input_data:
@@ -221,12 +246,14 @@ class Network(object):
 		return tf.reduce_sum(weight_variables, axis = 1)
 
 	@decorated_layer
-	def batch_normalization(self, input_data, name, relu=True, trainable = False):
+	def batch_normalization(self, input_data, name, scope = None, relu = True, decay = 0.9, epsilon = 1e-5, updates_collections = tf.GraphKeys.UPDATE_OPS, trainable = False):
+		temp_layer = tf.contrib.layers.batch_norm(input_data, decay = decay, scale = True, 
+													center=True, variables_collections = scope, epsilon = epsilon, is_training = trainable, scope = name)
 		if relu:
-			temp_layer = tf.contrib.layers.batch_norm(input_data, scale=True, center=True, is_training = trainable, scope = name)
+			
 			return tf.nn.relu(temp_layer)
 		else:
-			return tf.contrib.layers.batch_norm(input, scale=True, center=True, is_training = trainable, scope = name)
+			return temp_layer
 
 
 	def setup(self):
