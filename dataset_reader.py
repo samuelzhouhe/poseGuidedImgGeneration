@@ -98,7 +98,7 @@ class DataLoader:
             filesinside = os.listdir(folder_dir)
             imagefiles = []
             for filename in filesinside:
-                if not 'keypoints' in filename:
+                if not 'keypoints' in filename and not 'flat' in filename:
                     imagefiles.append(filename)
 
             if len(imagefiles) < 2:
