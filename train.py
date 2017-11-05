@@ -2,6 +2,8 @@ from model import Pose_GAN
 from dataset_reader import DataLoader
 import tensorflow as tf
 from config import cfg
+import os
+import cv2
 
 
 dataloader = DataLoader()
@@ -27,12 +29,14 @@ if ckpt and ckpt.model_checkpoint_path:
 print("Setting up summary op...")
 summary_merge = tf.summary.merge_all()
 
+if not os.path.exists(cfg.RESULT_DIR):
+    os.makedirs(cfg.RESULT_DIR)
 
 # step 1: train g1
 for itr in range(cfg.MAXITERATION):
     g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE)
     feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
-                 model.ib_input:conditional_image, model.mb_plus_1:target_morphologicals}
+                 model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
     sess.run(train_g1, feed_dict=feed_dict)
     if itr %5 == 0:
         train_loss, summaryString = sess.run([g1_loss,summary_merge],feed_dict=feed_dict)
@@ -41,6 +45,20 @@ for itr in range(cfg.MAXITERATION):
 
     if itr == cfg.MAXITERATION - 1 or itr%50==0:
         saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
+
+    if itr % 1000 == 0:
+        sample = sess.run(model.g1_output, feed_dict = feed_dict)
+        size = sample.shape[0]
+        dir_name = cfg.RESULT_DIR + '/g1_iter_' + str(itr)
+        if not os.path.exists(cfg.RESULT_DIR):
+            os.makedirs(dir_name)
+        print('size:', sample[0].shape)
+        for i in range(size):
+            name = dir_name + '/sample' + str(i + 1) + '.jpg'
+            cv2.imwrite(name, sample[i])
+
+
+
 
 # step 2: train g2 and d
 for itr in range(cfg.MAXITERATION, 2*cfg.MAXITERATION):
