@@ -8,6 +8,8 @@ import itertools
 import pickle
 import matplotlib.pyplot as plt
 import time
+import copy
+import shutil
 
 IMG_ROOTDIR = "./dataset/Img/img"
 KEYPOINTS_ROOTDIR = "./dataset/Img/img-keypoints"
@@ -139,30 +141,52 @@ def extract():
     keypoints_dir = os.path.join(root, 'img-keypoints')
 
     name = os.path.join(root, 'set')
+    if os.path.exists(name):
+        shutil.rmtree(name)
     if not os.path.exists(name):
         os.makedirs(name)
 
     for folder in os.listdir(keypoints_dir):
+
         curr_dir = os.path.join(img_dir, folder)
         key_dir = os.path.join(keypoints_dir, folder)
 
         for folder2 in os.listdir(key_dir):
+            print("Curr_dir is ", curr_dir)
+            print("folder 2 is ", folder2)
             curr_dir1 = os.path.join(curr_dir, folder2)
             key_dir1 = os.path.join(key_dir, folder2)
 
             for folder3 in os.listdir(key_dir1):
-                curr_folder = os.path.join(name, folder3)
+                curr_folder = os.path.join(name, folder3) # the pointer to the 'set' pool
+                # print(curr_dir1, "currdir1")
+                # print(folder3, "folder3")
                 curr_dir2 = os.path.join(curr_dir1, folder3)
+                img_dir_base = copy.deepcopy(curr_dir2)
+                # print(img_dir)
+                # print(curr_dir2)
                 key_dir2 = os.path.join(key_dir1, folder3)
-                if not os.path.exists(curr_folder):
-                    os.makedirs(curr_folder)
 
+                if not os.path.exists(curr_folder):
+                    # if this id is new to 'set'
+                    os.makedirs(curr_folder)
                     for file in os.listdir(key_dir2):
                         os.symlink(os.path.join(key_dir2, file), os.path.join(curr_folder, file))
+
                     for file_name in os.listdir(curr_dir2):
                         os.symlink(os.path.join(curr_dir2, file_name), os.path.join(curr_folder, file_name))
                 else:
-                    print(curr_folder)
+                    # this id already exists in the 'set' collection
+                    for img in os.listdir(img_dir_base):
+                        if not os.path.exists(os.path.join(curr_folder,img)):
+                            os.symlink(os.path.join(img_dir_base,img), os.path.join(curr_folder,img)) # symlink the images
+                    for key in os.listdir(key_dir2):
+                        if not os.path.exists(os.path.join(curr_folder,key)):
+                            os.symlink(os.path.join(key_dir2,key), os.path.join(curr_folder, key))
+
+
+
+
 
 
 
