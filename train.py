@@ -4,6 +4,7 @@ import tensorflow as tf
 from config import cfg
 import os
 import cv2
+import datetime
 
 
 dataloader = DataLoader()
@@ -49,8 +50,8 @@ for itr in range(cfg.MAXITERATION):
     if itr % 250 == 0:
         sample = sess.run(model.g1_output, feed_dict = feed_dict)
         size = sample.shape[0]
-        dir_name = cfg.RESULT_DIR + '/g1_iter_' + str(itr)
-        if not os.path.exists(cfg.RESULT_DIR):
+        dir_name = cfg.RESULT_DIR + '/g1_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
+        if not os.path.exists(dir_name):
             os.makedirs(dir_name)
         for i in range(size):
             name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
@@ -71,3 +72,17 @@ for itr in range(cfg.MAXITERATION, 2*cfg.MAXITERATION):
     sess.run([train_g2,train_d], feed_dict=feed_dict)
     if itr == cfg.MAXITERATION - 1 or itr %50==0:
         saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
+
+    if itr % 250 == 0:
+        g2out = sess.run(model.g2_output, feed_dict=feed_dict)
+        size = g2out.shape[0]
+        dir_name = cfg.RESULT_DIR + '/g2_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
+        if not os.path.exists(cfg.RESULT_DIR):
+            os.makedirs(dir_name)
+        for i in range(size):
+            name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
+            cv2.imwrite(name, g2out[i])
+            name_cond = dir_name + '/sample' + str(i + 1) + 'conditionalimg.jpg'
+            cv2.imwrite(name_cond, conditional_image[i, :, :, :])
+            name_target = dir_name + '/sample' + str(i + 1) + 'target.jpg'
+            cv2.imwrite(name_target, target_image[i, :, :, :])

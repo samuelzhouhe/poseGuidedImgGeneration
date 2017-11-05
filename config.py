@@ -12,4 +12,4 @@ cfg.LAMBDA = 10
 cfg.MAXITERATION = 1000000
 cfg.LOGDIR = './logs'
 cfg.MODE = 'train'
-cfg.RESULT_DIR = 'result'
+cfg.RESULT_DIR = './result'
