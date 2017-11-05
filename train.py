@@ -52,7 +52,7 @@ if cfg.PART =='g1':
         if itr == cfg.MAXITERATION - 1 or itr%50==0:
             saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
 
-        if itr % 250 == 0:
+        if itr % 50 == 0:
             sample = sess.run(model.g1_output, feed_dict = feed_dict)
             size = sample.shape[0]
             dir_name = cfg.RESULT_DIR + '/g1_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
@@ -83,15 +83,19 @@ elif cfg.PART == 'g2d':
         if itr == cfg.MAXITERATION - 1 or itr %50==0:
             saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
 
-        if itr % 250 == 0:
-            g2out = sess.run(model.g2_output, feed_dict=feed_dict)
-            size = g2out.shape[0]
+        if itr % 50 == 0:
+            final_output, g2_out, g1_out = sess.run([model.final_output, model.g2_output, model.g1_output], feed_dict=feed_dict)
+            size = final_output.shape[0]
             dir_name = cfg.RESULT_DIR + '/g2_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
             for i in range(size):
+                name = dir_name + '/sample' + str(i + 1) + 'finalout.jpg'
+                cv2.imwrite(name, final_output[i])
+                name = dir_name + '/sample' + str(i + 1) + 'g2out.jpg'
+                cv2.imwrite(name, g2_out[i])
                 name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
-                cv2.imwrite(name, g2out[i])
+                cv2.imwrite(name, g1_out[i])
                 name_cond = dir_name + '/sample' + str(i + 1) + 'conditionalimg.jpg'
                 cv2.imwrite(name_cond, conditional_image[i, :, :, :])
                 name_target = dir_name + '/sample' + str(i + 1) + 'target.jpg'
