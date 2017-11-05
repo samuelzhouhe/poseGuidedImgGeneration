@@ -7,6 +7,7 @@ import scipy
 import itertools
 import pickle
 import matplotlib.pyplot as plt
+import time
 
 IMG_ROOTDIR = "./dataset/Img/img"
 KEYPOINTS_ROOTDIR = "./dataset/Img/img-keypoints"
@@ -23,6 +24,7 @@ class DataLoader:
         self._getData()
 
     def _getData(self):
+        count = 0
         for root, dirs, files in os.walk(IMG_ROOTDIR, topdown=True):
             # same directory
             code2index = {}  # code is 01/02/03 etc. Index is 0 through 50000
@@ -56,6 +58,7 @@ class DataLoader:
                                     cv2.circle(mapofAllPoints, (keypoint[0][0], keypoint[0][1]), 4, 255, -1)
 
                                     # link the lines
+
                             links = [(16, 14), (14, 15), (15, 17), (16, 1), (14, 0),
                                      (15, 0), (17, 1), (0, 1), (1, 2),
                                      (2, 3), (3, 4), (1, 5), (5, 6), (6, 7), (2, 8), (1, 8), (1, 11), (5, 11),
@@ -95,9 +98,11 @@ class DataLoader:
                         else:
                             code2index[code] = [len(self.images) - 2, len(self.images) - 1]
 
-                        numimgssofar = len(self.images)
-                        if numimgssofar% 100 == 0:
-                            print(numimgssofar, "Images have been loaded")
+                        count += 2
+                        if count%50 == 0:
+                            print(count,"images have been loaded")
+                            print(time.time())
+
 
         for k, v in code2index.items():
             self.groupsofIndices.append(v)
