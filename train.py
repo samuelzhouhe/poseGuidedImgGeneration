@@ -64,7 +64,7 @@ for itr in range(cfg.MAXITERATION):
 for itr in range(cfg.MAXITERATION, 2*cfg.MAXITERATION):
     g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE)
     feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
-                 model.ib_input:conditional_image, model.mb_plus_1:target_morphologicals}
+                 model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
     sess.run([train_g2,train_d], feed_dict=feed_dict)
     if itr == cfg.MAXITERATION - 1 or itr %50==0:
         saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
