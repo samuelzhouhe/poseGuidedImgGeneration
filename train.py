@@ -46,15 +46,19 @@ for itr in range(cfg.MAXITERATION):
     if itr == cfg.MAXITERATION - 1 or itr%50==0:
         saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
 
-    if itr % 1000 == 0:
+    if itr % 250 == 0:
         sample = sess.run(model.g1_output, feed_dict = feed_dict)
         size = sample.shape[0]
         dir_name = cfg.RESULT_DIR + '/g1_iter_' + str(itr)
         if not os.path.exists(cfg.RESULT_DIR):
             os.makedirs(dir_name)
         for i in range(size):
-            name = dir_name + '/sample' + str(i + 1) + '.jpg'
+            name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
             cv2.imwrite(name, sample[i])
+            name_cond =dir_name + '/sample' + str(i+1) + 'conditionalimg.jpg'
+            cv2.imwrite(name_cond, conditional_image[i,:,:,:])
+            name_target = dir_name + '/sample' + str(i+1) + 'target.jpg'
+            cv2.imwrite(name_target, target_image[i,:,:,:])
 
 
 
