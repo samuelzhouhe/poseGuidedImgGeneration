@@ -10,9 +10,13 @@ import matplotlib.pyplot as plt
 import time
 import copy
 import shutil
+import random
 
 IMG_ROOTDIR = "./dataset/Img/img"
 KEYPOINTS_ROOTDIR = "./dataset/Img/img-keypoints"
+GENERAL_ROOTDIR = "./dataset/Img/set"
+TOTAL_CLOTHES = 7982  # 0001 TO 7982
+
 
 class DataLoader:
     images = None  # (?,256,256,3)
@@ -23,174 +27,156 @@ class DataLoader:
 
     def __init__(self):
         print("Initializing DeepFashion Dataset Loader...")
-        self._getData()
+        self.extract()
+        # self._getData()
 
-    def _getData(self):
-        count = 0
-        for root, dirs, files in os.walk(IMG_ROOTDIR, topdown=True):
-            # same directory
-            code2index = {}  # code is 01/02/03 etc. Index is 0 through 50000
-            for file in files:
-                fulldir = root + '/' + file
-                if not "flat" in file:
-                    img = cv2.imread(fulldir)
-                    if img is not None:
-                        # perform left-right flip
-                        img = np.expand_dims(img, axis=0)
-                        flippedImg = np.flip(img, axis=2)
-                        # process the keypoint thing
-                        heatmap = np.zeros([256, 256, 18])  # (of original image)
-                        mapofAllPoints = np.zeros([256, 256])
+    def process_oneimg(self, root, filename):
+        fulldir = root + '/' + filename
+        if not "flat" in filename:
+            img = cv2.imread(fulldir)
+            if img is not None:
+                img = np.expand_dims(img, axis=0)
+                # process the keypoint thing
+                heatmap = np.zeros([256, 256, 18])  # (of original image)
+                mapofAllPoints = np.zeros([256, 256])
 
-                        # process the stored keypoints
-                        keypointfileDir = fulldir[:fulldir.find('img')+3] + '-keypoints' + fulldir[fulldir.find('img')+3:] + 'keypoints'
-                        with open(keypointfileDir, 'rb') as kpfile:
-                            keypoints = pickle.load(kpfile)
+                # process the stored keypoints
+                keypointfileDir = fulldir + 'keypoints'
+                with open(keypointfileDir, 'rb') as kpfile:
+                    keypoints = pickle.load(kpfile)
+                    availablePoints = []
+                    for i in range(len(keypoints)):
+                        keypoint = keypoints[i]
 
-                            availablePoints = []
-                            for i in range(len(keypoints)):
-                                keypoint = keypoints[i]
+                        # draw circles
+                        if len(keypoint) != 0:  # a non-empty keypoint is a
+                            # list consists of one and only one tuple.
+                            availablePoints.append(i)
+                            heatmap[:, :, i] = cv2.circle(np.zeros([256, 256]),
+                                                          (keypoint[0][0], keypoint[0][1]), 4, 255, -1)
+                            cv2.circle(mapofAllPoints, (keypoint[0][0], keypoint[0][1]), 4, 255, -1)
 
-                                # draw circles
-                                if len(keypoint) != 0:  # a non-empty keypoint is a
-                                    # list consists of one and only one tuple.
-                                    availablePoints.append(i)
-                                    heatmap[:, :, i] = cv2.circle(np.zeros([256, 256]),
-                                                                  (keypoint[0][0], keypoint[0][1]), 4, 255, -1)
-                                    cv2.circle(mapofAllPoints, (keypoint[0][0], keypoint[0][1]), 4, 255, -1)
+                            # link the lines
 
-                                    # link the lines
+                    links = [(16, 14), (14, 15), (15, 17), (16, 1), (14, 0),
+                             (15, 0), (17, 1), (0, 1), (1, 2),
+                             (2, 3), (3, 4), (1, 5), (5, 6), (6, 7), (2, 8), (1, 8), (1, 11), (5, 11),
+                             (8, 9), (9, 10), (8, 11), (11, 12), (12, 13)]
+                    for link in links:
+                        if link[0] in availablePoints and link[1] in availablePoints:
+                            point1 = (keypoints[link[0]][0][0], keypoints[link[0]][0][1])
+                            point2 = (keypoints[link[1]][0][0], keypoints[link[1]][0][1])
+                            cv2.line(mapofAllPoints, point1, point2, 255, 10)
 
-                            links = [(16, 14), (14, 15), (15, 17), (16, 1), (14, 0),
-                                     (15, 0), (17, 1), (0, 1), (1, 2),
-                                     (2, 3), (3, 4), (1, 5), (5, 6), (6, 7), (2, 8), (1, 8), (1, 11), (5, 11),
-                                     (8, 9), (9, 10), (8, 11), (11, 12), (12, 13)]
-                            for link in links:
-                                if link[0] in availablePoints and link[1] in availablePoints:
-                                    point1 = (keypoints[link[0]][0][0], keypoints[link[0]][0][1])
-                                    point2 = (keypoints[link[1]][0][0], keypoints[link[1]][0][1])
-                                    cv2.line(mapofAllPoints, point1, point2, 255, 10)
+                kernel = np.asarray([[1, 1, 1], [1, 1, 1], [1, 1, 1]], dtype=np.uint8)
+                dilatedMapofAllPoints = cv2.dilate(mapofAllPoints, kernel, iterations=6)
+                dilatedMapofAllPoints[dilatedMapofAllPoints == 0] = 1
+                dilatedMapofAllPoints[dilatedMapofAllPoints == 255] = 2
 
-                        kernel = np.asarray([[1, 1, 1], [1, 1, 1], [1, 1, 1]], dtype=np.uint8)
-                        dilatedMapofAllPoints = cv2.dilate(mapofAllPoints, kernel, iterations=6)
-                        # quantize it into 1 and 2 (0 becomes 1, 255 becomes 2)
-                        dilatedMapofAllPoints[dilatedMapofAllPoints == 0] = 1
-                        dilatedMapofAllPoints[dilatedMapofAllPoints == 255] = 2
+                heatmap = np.expand_dims(heatmap, axis=0)
+                dilatedMapofAllPoints = np.expand_dims(dilatedMapofAllPoints, axis=0)
 
-                        heatmap = np.expand_dims(heatmap, axis=0)
-                        heatmap_flippedimg = np.flip(heatmap, axis=2)
-                        dilatedMapofAllPoints = np.expand_dims(dilatedMapofAllPoints, axis=0)
-                        dilatedMapofAllPoints_flipped = np.flip(dilatedMapofAllPoints, axis=2)
-                        # add both images and heatmaps to the their respective grand ndarrays
-                        if self.images is None:
-                            self.images = np.concatenate([img, flippedImg], axis=0)
-                            self.heatmaps = np.concatenate([heatmap, heatmap_flippedimg], axis=0)
-                            self.morphologicals = np.concatenate([dilatedMapofAllPoints, dilatedMapofAllPoints_flipped],
-                                                                 axis=0)
-                        else:
-                            self.images = np.concatenate([self.images, img, flippedImg], axis=0)
-                            self.heatmaps = np.concatenate([self.heatmaps, heatmap, heatmap_flippedimg], axis=0)
-                            self.morphologicals = np.concatenate(
-                                [self.morphologicals, dilatedMapofAllPoints, dilatedMapofAllPoints_flipped], axis=0)
-                        # code means "which variation of this cloth". Only clothes with the same code are deemed a PAIR.
-                        code = file[0:2]
-                        if code in code2index:
-                            code2index[code].append(len(self.images) - 2)
-                            code2index[code].append(len(self.images) - 1)
-                        else:
-                            code2index[code] = [len(self.images) - 2, len(self.images) - 1]
-
-                        count += 2
-                        if count%50 == 0:
-                            print(count,"images have been loaded")
-                            print(time.time())
-
-
-        for k, v in code2index.items():
-            self.groupsofIndices.append(v)
-
-        # Generate pairs
-        for group in self.groupsofIndices:
-            self.pairs.append(list(itertools.combinations(group, 2)))
-        self.pairs = list(itertools.chain.from_iterable(self.pairs))
+                return img, heatmap, dilatedMapofAllPoints
 
     def next_batch(self, batch_size):
-        num_pairs = len(self.pairs)
-        idx = np.arange(0, num_pairs)
-        np.random.shuffle(idx)
-        idx = idx[: batch_size]
         conditional_image = np.zeros([batch_size, 256, 256, 3])
         target_pose = np.zeros([batch_size, 256, 256, 18])
         target_image = np.zeros([batch_size, 256, 256, 3])
         target_morphologicals = np.zeros([batch_size, 256, 256])
-        for i in range(batch_size):
-            indexof_condimg = self.pairs[idx[i]][0]
-            indexof_targetimg = self.pairs[idx[i]][1]
-            conditional_image[i, :, :, :] = self.images[indexof_condimg, :, :, :]
-            target_pose[i, :, :, :] = self.heatmaps[indexof_targetimg, :, :, :]
-            target_image[i, :, :, :] = self.images[indexof_targetimg, :, :, :]
-            target_morphologicals[i, :, :] = self.morphologicals[indexof_targetimg, :, :]
+
+        clothesIndices = np.arange(1, TOTAL_CLOTHES)
+        np.random.shuffle(clothesIndices)
+        batchIndices = clothesIndices[: batch_size]
+
+        # randomly choose a folder
+        images_prepared = 0
+        folders_tried = 0
+        while images_prepared < batch_size:
+            index = batchIndices[folders_tried]
+            folder_name = 'id_' + '0' * (8 - len(str(index))) + str(index)  # e.g. id_00000345
+            folder_dir = os.path.join(GENERAL_ROOTDIR, folder_name)
+            filesinside = os.listdir(folder_dir)
+            imagefiles = []
+            for filename in filesinside:
+                if not 'keypoints' in filename:
+                    imagefiles.append(filename)
+
+            if len(imagefiles) < 2:
+                folders_tried += 1
+                continue
+            else:
+                random.shuffle(imagefiles)
+                conditional_image[images_prepared, :, :, :], _, _ = self.process_oneimg(folder_dir, imagefiles[0])
+
+            # find a matching target image (with the same leading two-digit code)
+            for file in imagefiles:
+                if file[:2] == imagefiles[0][:2] and file != imagefiles[0]:
+                    target_image[images_prepared, :, :, :], target_pose[images_prepared, :, :,
+                                                            :], target_morphologicals[images_prepared, :,
+                                                                :] = self.process_oneimg(folder_dir, file)
+            images_prepared += 1
+            folders_tried += 1
+
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
-        return g1_feed, conditional_image,target_image, np.expand_dims(target_morphologicals,axis=3)
+        target_morphologicals = np.expand_dims(target_morphologicals, axis=3)
 
-def extract():
-    root = os.path.join(os.getcwd(), 'dataset', 'Img')
-    root = os.path.abspath(root)
+        if (random.random() <= 0.5):
+            g1_feed = np.flip(g1_feed,axis=2)
+            conditional_image = np.flip(conditional_image,axis=2)
+            target_image = np.flip(target_image,axis=2)
+            target_morphologicals = np.flip(target_morphologicals,axis=2)
+        return g1_feed, conditional_image, target_image, target_morphologicals
 
-    img_dir = os.path.join(root, 'img')
-    keypoints_dir = os.path.join(root, 'img-keypoints')
+    def extract(self):
+        root = os.path.join(os.getcwd(), 'dataset', 'Img')
+        root = os.path.abspath(root)
 
-    name = os.path.join(root, 'set')
-    if os.path.exists(name):
-        shutil.rmtree(name)
-    if not os.path.exists(name):
-        os.makedirs(name)
+        img_dir = os.path.join(root, 'img')
+        keypoints_dir = os.path.join(root, 'img-keypoints')
 
-    for folder in os.listdir(keypoints_dir):
+        name = os.path.join(root, 'set')
+        if os.path.exists(name):
+            shutil.rmtree(name)
+        if not os.path.exists(name):
+            os.makedirs(name)
 
-        curr_dir = os.path.join(img_dir, folder)
-        key_dir = os.path.join(keypoints_dir, folder)
+        for folder in os.listdir(keypoints_dir):
 
-        for folder2 in os.listdir(key_dir):
-            print("Curr_dir is ", curr_dir)
-            print("folder 2 is ", folder2)
-            curr_dir1 = os.path.join(curr_dir, folder2)
-            key_dir1 = os.path.join(key_dir, folder2)
+            curr_dir = os.path.join(img_dir, folder)
+            key_dir = os.path.join(keypoints_dir, folder)
 
-            for folder3 in os.listdir(key_dir1):
-                curr_folder = os.path.join(name, folder3) # the pointer to the 'set' pool
-                # print(curr_dir1, "currdir1")
-                # print(folder3, "folder3")
-                curr_dir2 = os.path.join(curr_dir1, folder3)
-                img_dir_base = copy.deepcopy(curr_dir2)
-                # print(img_dir)
-                # print(curr_dir2)
-                key_dir2 = os.path.join(key_dir1, folder3)
+            for folder2 in os.listdir(key_dir):
+                print("Curr_dir is ", curr_dir)
+                print("folder 2 is ", folder2)
+                curr_dir1 = os.path.join(curr_dir, folder2)
+                key_dir1 = os.path.join(key_dir, folder2)
 
-                if not os.path.exists(curr_folder):
-                    # if this id is new to 'set'
-                    os.makedirs(curr_folder)
-                    for file in os.listdir(key_dir2):
-                        os.symlink(os.path.join(key_dir2, file), os.path.join(curr_folder, file))
+                for folder3 in os.listdir(key_dir1):
+                    curr_folder = os.path.join(name, folder3)  # the pointer to the 'set' pool
+                    curr_dir2 = os.path.join(curr_dir1, folder3)
+                    img_dir_base = copy.deepcopy(curr_dir2)
+                    key_dir2 = os.path.join(key_dir1, folder3)
 
-                    for file_name in os.listdir(curr_dir2):
-                        os.symlink(os.path.join(curr_dir2, file_name), os.path.join(curr_folder, file_name))
-                else:
-                    # this id already exists in the 'set' collection
-                    for img in os.listdir(img_dir_base):
-                        if not os.path.exists(os.path.join(curr_folder,img)):
-                            os.symlink(os.path.join(img_dir_base,img), os.path.join(curr_folder,img)) # symlink the images
-                    for key in os.listdir(key_dir2):
-                        if not os.path.exists(os.path.join(curr_folder,key)):
-                            os.symlink(os.path.join(key_dir2,key), os.path.join(curr_folder, key))
+                    if not os.path.exists(curr_folder):
+                        # if this id is new to 'set'
+                        os.makedirs(curr_folder)
+                        for file in os.listdir(key_dir2):
+                            os.symlink(os.path.join(key_dir2, file), os.path.join(curr_folder, file))
 
-
-
-
-
+                        for file_name in os.listdir(curr_dir2):
+                            os.symlink(os.path.join(curr_dir2, file_name), os.path.join(curr_folder, file_name))
+                    else:
+                        # this id already exists in the 'set' collection
+                        for img in os.listdir(img_dir_base):
+                            if not os.path.exists(os.path.join(curr_folder, img)):
+                                os.symlink(os.path.join(img_dir_base, img),
+                                           os.path.join(curr_folder, img))  # symlink the images
+                        for key in os.listdir(key_dir2):
+                            if not os.path.exists(os.path.join(curr_folder, key)):
+                                os.symlink(os.path.join(key_dir2, key), os.path.join(curr_folder, key))
 
 
 if __name__ == '__main__':
-    extract()
-
+    loader = DataLoader()
+    g1, cond, target, morp  = loader.next_batch(4)
 
