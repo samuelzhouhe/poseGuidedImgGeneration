@@ -8,8 +8,8 @@ import itertools
 import pickle
 import matplotlib.pyplot as plt
 
-ROOTDIR = "./Img_minibatch/img/MEN/Denim"
-
+IMG_ROOTDIR = "./dataset/Img/img"
+KEYPOINTS_ROOTDIR = "./dataset/Img/img-keypoints"
 
 class DataLoader:
     images = None  # (?,256,256,3)
@@ -23,7 +23,7 @@ class DataLoader:
         self._getData()
 
     def _getData(self):
-        for root, dirs, files in os.walk(ROOTDIR, topdown=True):
+        for root, dirs, files in os.walk(IMG_ROOTDIR, topdown=True):
             # same directory
             code2index = {}  # code is 01/02/03 etc. Index is 0 through 50000
             for file in files:
@@ -39,7 +39,8 @@ class DataLoader:
                         mapofAllPoints = np.zeros([256, 256])
 
                         # process the stored keypoints
-                        with open(fulldir + 'keypoints', 'rb') as kpfile:
+                        keypointfileDir = fulldir[:fulldir.find('img')+3] + '-keypoints' + fulldir[fulldir.find('img')+3:] + 'keypoints'
+                        with open(keypointfileDir, 'rb') as kpfile:
                             keypoints = pickle.load(kpfile)
 
                             availablePoints = []
@@ -94,6 +95,10 @@ class DataLoader:
                         else:
                             code2index[code] = [len(self.images) - 2, len(self.images) - 1]
 
+                        numimgssofar = len(self.images)
+                        if numimgssofar% 100 == 0:
+                            print(numimgssofar, "Images have been loaded")
+
         for k, v in code2index.items():
             self.groupsofIndices.append(v)
 
@@ -121,7 +126,42 @@ class DataLoader:
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
         return g1_feed, conditional_image,target_image, np.expand_dims(target_morphologicals,axis=3)
 
+def extract():
+    root = os.path.join(os.getcwd(), 'dataset', 'Img')
+    root = os.path.abspath(root)
+
+    img_dir = os.path.join(root, 'img')
+    keypoints_dir = os.path.join(root, 'img-keypoints')
+
+    name = os.path.join(root, 'set')
+    if not os.path.exists(name):
+        os.makedirs(name)
+
+    for folder in os.listdir(keypoints_dir):
+        curr_dir = os.path.join(img_dir, folder)
+        key_dir = os.path.join(keypoints_dir, folder)
+
+        for folder2 in os.listdir(key_dir):
+            curr_dir1 = os.path.join(curr_dir, folder2)
+            key_dir1 = os.path.join(key_dir, folder2)
+
+            for folder3 in os.listdir(key_dir1):
+                curr_folder = os.path.join(name, folder3)
+                curr_dir2 = os.path.join(curr_dir1, folder3)
+                key_dir2 = os.path.join(key_dir1, folder3)
+                if not os.path.exists(curr_folder):
+                    os.makedirs(curr_folder)
+
+                    for file in os.listdir(key_dir2):
+                        os.symlink(os.path.join(key_dir2, file), os.path.join(curr_folder, file))
+                    for file_name in os.listdir(curr_dir2):
+                        os.symlink(os.path.join(curr_dir2, file_name), os.path.join(curr_folder, file_name))
+                else:
+                    print(curr_folder)
 
 
+
+if __name__ == '__main__':
+    extract()
 
 
