@@ -52,7 +52,6 @@ for itr in range(cfg.MAXITERATION):
         dir_name = cfg.RESULT_DIR + '/g1_iter_' + str(itr)
         if not os.path.exists(cfg.RESULT_DIR):
             os.makedirs(dir_name)
-        print('size:', sample[0].shape)
         for i in range(size):
             name = dir_name + '/sample' + str(i + 1) + '.jpg'
             cv2.imwrite(name, sample[i])
