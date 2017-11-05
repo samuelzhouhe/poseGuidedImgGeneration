@@ -130,3 +130,43 @@ class DataLoader:
             target_morphologicals[i, :, :] = self.morphologicals[indexof_targetimg, :, :]
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
         return g1_feed, conditional_image,target_image, np.expand_dims(target_morphologicals,axis=3)
+
+def extract():
+    root = os.path.join(os.getcwd(), 'dataset', 'Img')
+    root = os.path.abspath(root)
+
+    img_dir = os.path.join(root, 'img')
+    keypoints_dir = os.path.join(root, 'img-keypoints')
+
+    name = os.path.join(root, 'set')
+    if not os.path.exists(name):
+        os.makedirs(name)
+
+    for folder in os.listdir(keypoints_dir):
+        curr_dir = os.path.join(img_dir, folder)
+        key_dir = os.path.join(keypoints_dir, folder)
+
+        for folder2 in os.listdir(key_dir):
+            curr_dir1 = os.path.join(curr_dir, folder2)
+            key_dir1 = os.path.join(key_dir, folder2)
+
+            for folder3 in os.listdir(key_dir1):
+                curr_folder = os.path.join(name, folder3)
+                curr_dir2 = os.path.join(curr_dir1, folder3)
+                key_dir2 = os.path.join(key_dir1, folder3)
+                if not os.path.exists(curr_folder):
+                    os.makedirs(curr_folder)
+
+                    for file in os.listdir(key_dir2):
+                        os.symlink(os.path.join(key_dir2, file), os.path.join(curr_folder, file))
+                    for file_name in os.listdir(curr_dir2):
+                        os.symlink(os.path.join(curr_dir2, file_name), os.path.join(curr_folder, file_name))
+                else:
+                    print(curr_folder)
+
+
+
+if __name__ == '__main__':
+    extract()
+
+
