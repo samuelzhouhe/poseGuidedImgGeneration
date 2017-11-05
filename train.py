@@ -87,7 +87,7 @@ elif cfg.PART == 'g2d':
             g2out = sess.run(model.g2_output, feed_dict=feed_dict)
             size = g2out.shape[0]
             dir_name = cfg.RESULT_DIR + '/g2_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
-            if not os.path.exists(cfg.RESULT_DIR):
+            if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
             for i in range(size):
                 name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
