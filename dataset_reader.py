@@ -8,8 +8,8 @@ import itertools
 import pickle
 import matplotlib.pyplot as plt
 
-ROOTDIR = "./Img_minibatch/img/MEN/Denim"
-
+IMG_ROOTDIR = "./dataset/Img/img"
+KEYPOINTS_ROOTDIR = "./dataset/Img/img-keypoints"
 
 class DataLoader:
     images = None  # (?,256,256,3)
@@ -23,7 +23,7 @@ class DataLoader:
         self._getData()
 
     def _getData(self):
-        for root, dirs, files in os.walk(ROOTDIR, topdown=True):
+        for root, dirs, files in os.walk(IMG_ROOTDIR, topdown=True):
             # same directory
             code2index = {}  # code is 01/02/03 etc. Index is 0 through 50000
             for file in files:
@@ -39,7 +39,8 @@ class DataLoader:
                         mapofAllPoints = np.zeros([256, 256])
 
                         # process the stored keypoints
-                        with open(fulldir + 'keypoints', 'rb') as kpfile:
+                        keypointfileDir = fulldir[:fulldir.find('img')+3] + '-keypoints' + fulldir[fulldir.find('img')+3:] + 'keypoints'
+                        with open(keypointfileDir, 'rb') as kpfile:
                             keypoints = pickle.load(kpfile)
 
                             availablePoints = []
@@ -94,6 +95,10 @@ class DataLoader:
                         else:
                             code2index[code] = [len(self.images) - 2, len(self.images) - 1]
 
+                        numimgssofar = len(self.images)
+                        if numimgssofar% 100 == 0:
+                            print(numimgssofar, "Images have been loaded")
+
         for k, v in code2index.items():
             self.groupsofIndices.append(v)
 
@@ -123,3 +128,4 @@ class DataLoader:
 
 
 
+loader = DataLoader()
