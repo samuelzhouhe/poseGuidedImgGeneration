@@ -125,7 +125,3 @@ class DataLoader:
             target_morphologicals[i, :, :] = self.morphologicals[indexof_targetimg, :, :]
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
         return g1_feed, conditional_image,target_image, np.expand_dims(target_morphologicals,axis=3)
-
-
-
-loader = DataLoader()
