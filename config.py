@@ -5,7 +5,7 @@ cfg = ed()
 
 cfg.IMAGE_SHAPE = [256, 256, 3]
 cfg.G1_INPUT_DATA_SHAPE = cfg.IMAGE_SHAPE[:2] + [21]
-cfg.BATCH_SIZE = 8
+cfg.BATCH_SIZE = 4
 cfg.N = 6  # number of resudual blocks
 cfg.WEIGHT_DECAY = 0.005
 cfg.LAMBDA = 10

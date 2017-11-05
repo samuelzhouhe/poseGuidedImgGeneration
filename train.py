@@ -29,6 +29,7 @@ if ckpt and ckpt.model_checkpoint_path:
     saver.restore(sess, ckpt.model_checkpoint_path)
     print("Model restored...")
     start_itr = int(ckpt.model_checkpoint_path.split('-')[1])
+    print("starting from iteration", start_itr)
 
 print("Setting up summary op...")
 summary_merge = tf.summary.merge_all()
@@ -73,6 +74,12 @@ elif cfg.PART == 'g2d':
         feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
                      model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
         sess.run([train_g2,train_d], feed_dict=feed_dict)
+
+        if itr %5 == 0:
+            g2loss, dloss, summaryString = sess.run([g2_loss, d_loss, summary_merge],feed_dict=feed_dict)
+            summary_writer.add_summary(summaryString,itr)
+            print("training loss when training g and d is", g2loss, "and",dloss, "at iteration ", itr)
+
         if itr == cfg.MAXITERATION - 1 or itr %50==0:
             saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
 
