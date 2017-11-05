@@ -86,13 +86,13 @@ class DataLoader:
 
         clothesIndices = np.arange(1, TOTAL_CLOTHES)
         np.random.shuffle(clothesIndices)
-        batchIndices = clothesIndices[: batch_size]
+        # batchIndices = clothesIndices[: batch_size]
 
         # randomly choose a folder
         images_prepared = 0
         folders_tried = 0
         while images_prepared < batch_size:
-            index = batchIndices[folders_tried]
+            index = clothesIndices[folders_tried]
             folder_name = 'id_' + '0' * (8 - len(str(index))) + str(index)  # e.g. id_00000345
             folder_dir = os.path.join(GENERAL_ROOTDIR, folder_name)
             filesinside = os.listdir(folder_dir)
