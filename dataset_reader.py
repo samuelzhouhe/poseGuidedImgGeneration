@@ -25,14 +25,29 @@ class DataLoader:
     pairs = []
     groupsofIndices = []
 
+
+
     def __init__(self):
         print("Initializing DeepFashion Dataset Loader...")
+        self.index2dir = {}
+        self.groupsofIndices = []
+        self.pairs = []
+        self.numofphotos = 0
         self.extract()
-        # self._getData()
+        # Generate pairs
+        for group in self.groupsofIndices:
+            self.pairs.append(list(itertools.permutations(group, 2)))
+        self.pairs = list(itertools.chain.from_iterable(self.pairs))
+        random.shuffle(self.pairs)
+        cutoff = int(len(self.pairs) * 0.8)
+        self.trainingPairs = self.pairs[:cutoff]
+        self.validationPairs = self.pairs[cutoff:]
+        print("hello")
 
-    def process_oneimg(self, root, filename):
-        fulldir = root + '/' + filename
-        if not "flat" in filename:
+    def process_oneimg(self, fulldir):
+
+        # fulldir = root + '/' + filename
+        if not "flat" in fulldir:
             img = cv2.imread(fulldir)
             if img is not None:
                 img = np.expand_dims(img, axis=0)
@@ -78,44 +93,55 @@ class DataLoader:
 
                 return img, heatmap, dilatedMapofAllPoints
 
-    def next_batch(self, batch_size):
+    def next_batch(self, batch_size, trainorval):
         conditional_image = np.zeros([batch_size, 256, 256, 3])
         target_pose = np.zeros([batch_size, 256, 256, 18])
         target_image = np.zeros([batch_size, 256, 256, 3])
         target_morphologicals = np.zeros([batch_size, 256, 256])
 
-        clothesIndices = np.arange(1, TOTAL_CLOTHES)
-        np.random.shuffle(clothesIndices)
-        # batchIndices = clothesIndices[: batch_size]
+        # clothesIndices = np.arange(1, TOTAL_CLOTHES)
+        # np.random.shuffle(clothesIndices)
+        pairstofeed = None
+        if trainorval == 'TRAIN':
+            pairstofeed = random.sample(self.trainingPairs, batch_size)
+        elif trainorval=='VALIDATION':
+            pairstofeed = random.sample(self.validationPairs, batch_size)
+        else:
+            raise ValueError("trainorval must be either TRAIN or VALIDATION")
+        for i in range(batch_size):
+            condimg_dir = self.index2dir[pairstofeed[i][0]]
+            conditional_image[i], _,_ = self.process_oneimg(condimg_dir)
+            targetimg_dir = self.index2dir[pairstofeed[i][1]]
+            target_image[i], target_pose[i], target_morphologicals[i] = self.process_oneimg(targetimg_dir)
 
         # randomly choose a folder
-        images_prepared = 0
-        folders_tried = 0
-        while images_prepared < batch_size:
-            index = clothesIndices[folders_tried]
-            folder_name = 'id_' + '0' * (8 - len(str(index))) + str(index)  # e.g. id_00000345
-            folder_dir = os.path.join(GENERAL_ROOTDIR, folder_name)
-            filesinside = os.listdir(folder_dir)
-            imagefiles = []
-            for filename in filesinside:
-                if not 'keypoints' in filename and not 'flat' in filename:
-                    imagefiles.append(filename)
-
-            if len(imagefiles) < 2:
-                folders_tried += 1
-                continue
-            else:
-                random.shuffle(imagefiles)
-                conditional_image[images_prepared, :, :, :], _, _ = self.process_oneimg(folder_dir, imagefiles[0])
-
-            # find a matching target image (with the same leading two-digit code)
-            for file in imagefiles:
-                if file[:2] == imagefiles[0][:2] and file != imagefiles[0]:
-                    target_image[images_prepared, :, :, :], target_pose[images_prepared, :, :,
-                                                            :], target_morphologicals[images_prepared, :,
-                                                                :] = self.process_oneimg(folder_dir, file)
-            images_prepared += 1
-            folders_tried += 1
+        # images_prepared = 0
+        # folders_tried = 0
+        # while images_prepared < batch_size:
+        #     index = clothesIndices[folders_tried]
+        #     folder_name = 'id_' + '0' * (8 - len(str(index))) + str(index)  # e.g. id_00000345
+        #     folder_dir = os.path.join(GENERAL_ROOTDIR, folder_name)
+        #     filesinside = os.listdir(folder_dir)
+        #     imagefiles = []
+        #     for filename in filesinside:
+        #         if not 'keypoints' in filename and not 'flat' in filename:
+        #             imagefiles.append(filename)
+        #
+        #     if len(imagefiles) < 2: # if there are less than two images (one or zero) in this folder, then give up and try another folder.
+        #         folders_tried += 1
+        #         continue
+        #     else:
+        #         random.shuffle(imagefiles)
+        #         conditional_image[images_prepared, :, :, :], _, _ = self.process_oneimg(folder_dir, imagefiles[0])
+        #
+        #     # find a matching target image (with the same leading two-digit code)
+        #     for file in imagefiles:
+        #         if file[:2] == imagefiles[0][:2] and file != imagefiles[0]:
+        #             target_image[images_prepared, :, :, :], target_pose[images_prepared, :, :,
+        #                                                     :], target_morphologicals[images_prepared, :,
+        #                                                         :] = self.process_oneimg(folder_dir, file)
+        #     images_prepared += 1
+        #     folders_tried += 1
 
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
         target_morphologicals = np.expand_dims(target_morphologicals, axis=3)
@@ -127,6 +153,8 @@ class DataLoader:
             target_morphologicals = np.flip(target_morphologicals,axis=2)
         return g1_feed, conditional_image, target_image, target_morphologicals
 
+    # def set(self, folder_dir):
+    #     file_names = os.listdir(folder_dir)
     def extract(self):
         root = os.path.join(os.getcwd(), 'dataset', 'Img')
         root = os.path.abspath(root)
@@ -157,14 +185,29 @@ class DataLoader:
                     img_dir_base = copy.deepcopy(curr_dir2)
                     key_dir2 = os.path.join(key_dir1, folder3)
 
+                    # this level is folder-level
                     if not os.path.exists(curr_folder):
+                        code2index = {}
                         # if this id is new to 'set'
                         os.makedirs(curr_folder)
                         for file in os.listdir(key_dir2):
                             os.symlink(os.path.join(key_dir2, file), os.path.join(curr_folder, file))
 
                         for file_name in os.listdir(curr_dir2):
-                            os.symlink(os.path.join(curr_dir2, file_name), os.path.join(curr_folder, file_name))
+                            path_join = os.path.join(curr_dir2, file_name) # the ACTUAL path
+                            if not 'keypoints' in file_name and not 'flat' in file_name:
+                                self.index2dir[self.numofphotos] = os.path.join(curr_folder, file_name) # the symlinked path.
+                                code = file_name[:2]
+                                if not code in code2index:
+                                    code2index[code] = [self.numofphotos]
+                                else:
+                                    code2index[code].append(self.numofphotos)
+                                self.numofphotos += 1  # increment global counter
+                                os.symlink(path_join, os.path.join(curr_folder, file_name))
+                        for k, v in code2index.items():
+                            self.groupsofIndices.append(v)
+
+
                     else:
                         # this id already exists in the 'set' collection
                         for img in os.listdir(img_dir_base):
@@ -178,5 +221,5 @@ class DataLoader:
 
 if __name__ == '__main__':
     loader = DataLoader()
-    g1, cond, target, morp  = loader.next_batch(4)
+    g1, cond, target, morp  = loader.next_batch(4, trainorval='TRAIN')
 

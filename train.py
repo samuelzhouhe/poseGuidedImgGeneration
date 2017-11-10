@@ -8,6 +8,7 @@ import datetime
 
 
 dataloader = DataLoader()
+validationDataLoader = DataLoader()
 model = Pose_GAN()
 g1_loss, g2_loss, d_loss = model.build_loss()
 tf.summary.scalar("g1loss", g1_loss)
