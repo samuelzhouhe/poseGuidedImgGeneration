@@ -13,6 +13,8 @@ g1_loss, g2_loss, d_loss = model.build_loss()
 tf.summary.scalar("g1loss", g1_loss)
 tf.summary.scalar("g2loss", g2_loss)
 tf.summary.scalar("dloss", d_loss)
+#tf.summary.scalar("regloss", l2_reg_loss)
+
 sess = tf.Session()
 optimizer = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5)
 train_g1 = optimizer.minimize(g1_loss)

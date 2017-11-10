@@ -11,6 +11,9 @@ class Pose_GAN(Network):
 		self.N = cfg.N
 		self.im_width = cfg.G1_INPUT_DATA_SHAPE[1]
 		self.im_height = cfg.G1_INPUT_DATA_SHAPE[0]
+		self.g1_variables = []
+		self.g2_variables = []
+		self.d_variables = []
 		self.layers = {'g1_input': self.g1_input, 'ia_input': self.ia_input, 'ib_input': self.ib_input}
 		self.__setup()
 
@@ -105,8 +108,10 @@ class Pose_GAN(Network):
 			 .conv2d_tran(3, 3, 1, 1, name = 'g1_result'))
 
 		#=============G2 encoder============
+
 		print('=============G2 encoder=============')
-		(self.feed('ia_input', 'g1_result')
+		(self.feed('g1_result').stop_gradient(name = 'barrier'))
+		(self.feed('ia_input', 'barrier')
 			 .concatenate(name = 'concat', axis = -1)
 			 .conv2d(3, 128, 1, 1, name = 'conv_g2')
 			 .conv2d(3, 128, 1, 1, name = 'g2_block1_conv1')
@@ -231,7 +236,10 @@ class Pose_GAN(Network):
 		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['g2_result'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
 		self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 
-		return self.layers['g1_loss'], self.layers['g2_loss'], self.layers['d_loss']
+		#=============l2 regularization loss============
+		#self.layers['l2_reg_loss'] = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+
+		return self.layers['g1_loss'], self.layers['g2_loss'], self.layers['d_loss']#, self.layers['l2_reg_loss']
 
 if __name__ == '__main__':
 	model = Pose_GAN()
