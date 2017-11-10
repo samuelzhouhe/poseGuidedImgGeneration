@@ -47,7 +47,7 @@ if cfg.PART =='g1':
         feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
                      model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
         sess.run(train_g1, feed_dict=feed_dict)
-        if itr %5 == 0:
+        if itr %10 == 0:
             train_loss, summaryString = sess.run([g1_loss,summary_merge],feed_dict=feed_dict)
             summary_writer.add_summary(summaryString,itr)
             print("training loss is", train_loss, "itr",itr)
@@ -69,6 +69,14 @@ if cfg.PART =='g1':
                 name_target = dir_name + '/sample' + str(i+1) + 'target.jpg'
                 cv2.imwrite(name_target, target_image[i,:,:,:])
 
+            g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE,
+                                                                                                    trainorval='VALIDATION')
+            feed_dict = {model.g1_input: g1_feed, model.ia_input: conditional_image,
+                         model.ib_input: target_image, model.mb_plus_1: target_morphologicals}
+            val_g1loss = sess.run(g1_loss,feed_dict=feed_dict)
+            print("Validation G1 loss at itr ", itr, " is ", val_g1loss)
+
+
 
 elif cfg.PART == 'g2d':
     # step 2: train g2 and d
@@ -78,7 +86,7 @@ elif cfg.PART == 'g2d':
                      model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
         sess.run([train_g2,train_d], feed_dict=feed_dict)
 
-        if itr %5 == 0:
+        if itr %10 == 0:
             g2loss, dloss, summaryString = sess.run([g2_loss, d_loss, summary_merge],feed_dict=feed_dict)
             summary_writer.add_summary(summaryString,itr)
             print("training loss when training g and d is", g2loss, "and",dloss, "at iteration ", itr)
@@ -103,3 +111,10 @@ elif cfg.PART == 'g2d':
                 cv2.imwrite(name_cond, conditional_image[i, :, :, :])
                 name_target = dir_name + '/sample' + str(i + 1) + 'target.jpg'
                 cv2.imwrite(name_target, target_image[i, :, :, :])
+
+            g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE,
+                                                                                                    trainorval='VALIDATION')
+            feed_dict = {model.g1_input: g1_feed, model.ia_input: conditional_image,
+                         model.ib_input: target_image, model.mb_plus_1: target_morphologicals}
+            g2lossvalue, dlossvalue = sess.run([g2_loss, d_loss], feed_dict=feed_dict)
+            print("Validation G2 D loss at itr ", itr, " is ", g2lossvalue, " and ", dlossvalue)

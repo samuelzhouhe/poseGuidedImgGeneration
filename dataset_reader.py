@@ -40,7 +40,7 @@ class DataLoader:
             self.pairs.append(list(itertools.permutations(group, 2)))
         self.pairs = list(itertools.chain.from_iterable(self.pairs))
         random.shuffle(self.pairs)
-        cutoff = int(len(self.pairs) * 0.8)
+        cutoff = int(len(self.pairs) * 0.9)
         self.trainingPairs = self.pairs[:cutoff]
         self.validationPairs = self.pairs[cutoff:]
 
