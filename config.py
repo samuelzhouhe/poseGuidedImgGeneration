@@ -13,4 +13,3 @@ cfg.MAXITERATION = 25000
 cfg.LOGDIR = './logs'
 cfg.MODE = 'train'
 cfg.RESULT_DIR = './result'
-cfg.PART = 'g1'
