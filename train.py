@@ -43,7 +43,7 @@ if not os.path.exists(cfg.RESULT_DIR):
 # step 1: train g1
 if cfg.PART =='g1':
     for itr in range(start_itr, start_itr+ cfg.MAXITERATION):
-        g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE)
+        g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE, trainorval='TRAIN')
         feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
                      model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
         sess.run(train_g1, feed_dict=feed_dict)
@@ -73,7 +73,7 @@ if cfg.PART =='g1':
 elif cfg.PART == 'g2d':
     # step 2: train g2 and d
     for itr in range(start_itr, start_itr+cfg.MAXITERATION):
-        g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE)
+        g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE, trainorval='TRAIN')
         feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
                      model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
         sess.run([train_g2,train_d], feed_dict=feed_dict)
