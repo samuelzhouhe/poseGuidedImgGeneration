@@ -250,6 +250,8 @@ class Network(object):
 			return tf.nn.relu(temp_layer)
 		else:
 			return temp_layer
+
+	@decorated_layer
 	def stop_gradient(self, input_data, name):
 		return tf.stop_gradient(input_data, name = name)
 
