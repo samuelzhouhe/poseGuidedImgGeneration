@@ -29,6 +29,7 @@ class DataLoader:
 
     def __init__(self):
         print("Initializing DeepFashion Dataset Loader...")
+        random.seed(5331)    # for repeatability, so that if the model is trained,saved,loaded,trained again, the train-validation split remains the same
         self.index2dir = {}
         self.groupsofIndices = []
         self.pairs = []
@@ -42,7 +43,6 @@ class DataLoader:
         cutoff = int(len(self.pairs) * 0.8)
         self.trainingPairs = self.pairs[:cutoff]
         self.validationPairs = self.pairs[cutoff:]
-        print("hello")
 
     def process_oneimg(self, fulldir):
 
@@ -113,35 +113,6 @@ class DataLoader:
             conditional_image[i], _,_ = self.process_oneimg(condimg_dir)
             targetimg_dir = self.index2dir[pairstofeed[i][1]]
             target_image[i], target_pose[i], target_morphologicals[i] = self.process_oneimg(targetimg_dir)
-
-        # randomly choose a folder
-        # images_prepared = 0
-        # folders_tried = 0
-        # while images_prepared < batch_size:
-        #     index = clothesIndices[folders_tried]
-        #     folder_name = 'id_' + '0' * (8 - len(str(index))) + str(index)  # e.g. id_00000345
-        #     folder_dir = os.path.join(GENERAL_ROOTDIR, folder_name)
-        #     filesinside = os.listdir(folder_dir)
-        #     imagefiles = []
-        #     for filename in filesinside:
-        #         if not 'keypoints' in filename and not 'flat' in filename:
-        #             imagefiles.append(filename)
-        #
-        #     if len(imagefiles) < 2: # if there are less than two images (one or zero) in this folder, then give up and try another folder.
-        #         folders_tried += 1
-        #         continue
-        #     else:
-        #         random.shuffle(imagefiles)
-        #         conditional_image[images_prepared, :, :, :], _, _ = self.process_oneimg(folder_dir, imagefiles[0])
-        #
-        #     # find a matching target image (with the same leading two-digit code)
-        #     for file in imagefiles:
-        #         if file[:2] == imagefiles[0][:2] and file != imagefiles[0]:
-        #             target_image[images_prepared, :, :, :], target_pose[images_prepared, :, :,
-        #                                                     :], target_morphologicals[images_prepared, :,
-        #                                                         :] = self.process_oneimg(folder_dir, file)
-        #     images_prepared += 1
-        #     folders_tried += 1
 
         g1_feed = np.concatenate([conditional_image, target_pose], axis=3)  # the (batch,256,256,21) thing.
         target_morphologicals = np.expand_dims(target_morphologicals, axis=3)
