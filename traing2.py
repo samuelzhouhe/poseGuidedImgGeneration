@@ -8,13 +8,19 @@ import datetime
 
 
 dataloader = DataLoader()
-model = Pose_GAN(traing1ornot=False)
-g2_loss, d_loss, _ = model.build_loss()
+model = Pose_GAN(traing1ornot=True)
+g1_loss, g2_loss, d_loss= model.build_loss()
+tf.summary.scalar("g1loss", g1_loss)
 tf.summary.scalar("g2loss", g2_loss)
 tf.summary.scalar("dloss", d_loss)
 
-sess = tf.Session()
+
+config = tf.ConfigProto(log_device_placement = True)
+config.gpu_options.allow_growth = True
+config.gpu_options.per_process_gpu_memory_fraction = 0.7
+sess = tf.Session(config=config)
 optimizer = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5)
+train_g1 = optimizer.minimize(g1_loss)
 train_g2 = optimizer.minimize(g2_loss)
 train_d = optimizer.minimize(d_loss)
 
@@ -37,7 +43,7 @@ if not os.path.exists(cfg.RESULT_DIR):
     os.makedirs(cfg.RESULT_DIR)
 
 # step 2: train g2 and d
-if start_itr >= cfg.MAXITERATION and start_itr < 2*cfg.MAXITERATION:
+if start_itr >= cfg.MAXITERATION-1 and start_itr < 2*cfg.MAXITERATION:
     for itr in range(start_itr, 2*cfg.MAXITERATION):
         g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE, trainorval='TRAIN')
         feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,

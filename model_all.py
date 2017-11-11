@@ -3,7 +3,7 @@ from config import cfg
 import tensorflow as tf
 
 class Pose_GAN(Network):
-	def __init__(self, traing1ornot):
+	def __init__(self, traing1ornot=True):
 		self.inputs = []
 		self.g1_input = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.G1_INPUT_DATA_SHAPE, name = 'g1_input')
 		self.ia_input = tf.placeholder(tf.float32, shape = [None] + cfg.IMAGE_SHAPE, name = 'ia_input')
@@ -163,7 +163,7 @@ class Pose_GAN(Network):
 
 		#=============Final output============
 		print('=============Final output=============')
-		(self.feed('g1_result', 'g2_result')
+		(self.feed('barrier', 'g2_result')
 			 .add(name = 'final_output'))
 
 		#=============Discriminator============
@@ -219,6 +219,12 @@ class Pose_GAN(Network):
 		return self.layers['mb_plus_1']
 
 	def build_loss(self):
+		#=============g1 loss============
+		self.layers['mb_plus_1'] = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE[:2] + [1], name = 'mb_plus_1')
+		l1_distance = tf.abs(tf.multiply(self.layers['g1_result'] - self.layers['ib_input'], self.layers['mb_plus_1']))
+
+		self.layers['g1_loss'] = tf.reduce_mean(tf.reduce_sum(l1_distance, axis = [1, 2, 3]))
+
 		#=============discriminator loss============
 		(self.feed('logit_real')
 			 .sigmoid(name = 'real_loss', labels = tf.ones_like(self.layers['logit_real']), loss = True))
@@ -227,7 +233,6 @@ class Pose_GAN(Network):
 		self.layers['d_loss'] = tf.reduce_mean(self.layers['fake_loss'] + self.layers['real_loss'])
 
 		#=============g2 loss============
-		self.layers['mb_plus_1'] = tf.placeholder(tf.float32, shape = [cfg.BATCH_SIZE] + cfg.IMAGE_SHAPE[:2] + [1], name = 'mb_plus_1')
 		(self.feed('logit_fake')
 			 .sigmoid(name = 'g2_adv_loss', labels = tf.ones_like(self.layers['logit_fake']), loss = True))
 
@@ -235,9 +240,9 @@ class Pose_GAN(Network):
 		self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 
 		#=============l2 regularization loss============
-		self.layers['l2_reg_loss'] = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+		# self.layers['l2_reg_loss'] = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
-		return self.layers['g2_loss'], self.layers['d_loss'], self.layers['l2_reg_loss']
+		return self.layers['g1_loss'], self.layers['g2_loss'], self.layers['d_loss']
 
 if __name__ == '__main__':
 	model = Pose_GAN()
