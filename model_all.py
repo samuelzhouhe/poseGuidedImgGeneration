@@ -236,7 +236,7 @@ class Pose_GAN(Network):
 		(self.feed('logit_fake')
 			 .sigmoid(name = 'g2_adv_loss', labels = tf.ones_like(self.layers['logit_fake']), loss = True))
 
-		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['g2_result'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
+		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['final_result'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
 		self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 
 		#=============l2 regularization loss============
