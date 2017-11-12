@@ -38,7 +38,7 @@ summary_merge = tf.summary.merge_all()
 if not os.path.exists(cfg.RESULT_DIR):
     os.makedirs(cfg.RESULT_DIR)
 
-if (False):
+if (start_itr < cfg.MAXITERATION):
     # step 1: train g1
     for itr in range(start_itr, cfg.MAXITERATION):
         g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE, trainorval='TRAIN')
@@ -84,19 +84,17 @@ if (False):
 saver = tf.train.Saver(max_to_keep=2)
 # step 2: train g2 and d
 for itr in range(cfg.MAXITERATION-1, 2*cfg.MAXITERATION):
-    g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE_G2D, trainorval='TRAIN')
-    feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
-                 model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
+    for _ in range(5):
+        g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE_G2D, trainorval='TRAIN')
+        feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
+                     model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
+        sess.run([train_g2], feed_dict=feed_dict)
 
-    g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE, trainorval='VALIDATION')
-    feed_dict_val = {model.g1_input: g1_feed, model.ia_input:conditional_image,
-                 model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
-    sess.run([train_g2], feed_dict=feed_dict)
+
     sess.run([train_d], feed_dict=feed_dict)
 
     if itr %10 == 0:
-        g2loss, dloss, summaryString = sess.run([g2_loss, d_loss, summary_merge],feed_dict=feed_dict)
-        fake_score, real_score = sess.run([model.d_fake, model.d_real], feed_dict=feed_dict_val)
+        fake_score, real_score, g2loss, dloss, summaryString = sess.run([model.d_fake, model.d_real, g2_loss, d_loss, summary_merge],feed_dict=feed_dict)
         avg_fake_score = np.mean(fake_score)
         avg_real_score = np.mean(real_score)
         summary_writer.add_summary(summaryString,itr)
@@ -104,7 +102,7 @@ for itr in range(cfg.MAXITERATION-1, 2*cfg.MAXITERATION):
 
         print("g2 loss:", g2loss, "|d loss", dloss, "|d real:", avg_real_score, "|d fake", avg_fake_score, "|iteration ", itr)
 
-    if itr == cfg.MAXITERATION - 1 or itr %10000==0:
+    if itr == cfg.MAXITERATION - 1 or itr %1000==0:
         saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
 
     if itr % 1000 == 0:
