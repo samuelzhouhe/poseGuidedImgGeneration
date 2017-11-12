@@ -12,12 +12,8 @@ class Pose_GAN(Network):
 		self.N = cfg.N
 		self.im_width = cfg.G1_INPUT_DATA_SHAPE[1]
 		self.im_height = cfg.G1_INPUT_DATA_SHAPE[0]
-		self.g1_variables = []
-		self.g2_variables = []
-		self.d_variables = []
 		self.g2_var = []
 		self.d_var = []
-		self.bn_layers = {}
 		self.layers = {'g1_input': self.g1_input, 'ia_input': self.ia_input, 'ib_input': self.ib_input}
 		self.__setup()
 
@@ -208,9 +204,6 @@ class Pose_GAN(Network):
 
 			t_var = tf.trainable_variables()
 			self.d_var = [var for var in t_var if 'd_' in var.name]
-			print('=============================')
-			print(self.d_var)
-			print('=============================')
 	@property
 	def d_fake(self):
 		return self.layers['d_fake']
