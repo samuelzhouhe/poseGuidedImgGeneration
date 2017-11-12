@@ -15,6 +15,7 @@ class Pose_GAN(Network):
 		self.g1_variables = []
 		self.g2_variables = []
 		self.d_variables = []
+		self.g2_var = []
 		self.layers = {'g1_input': self.g1_input, 'ia_input': self.ia_input, 'ib_input': self.ib_input}
 		self.__setup()
 
@@ -114,52 +115,52 @@ class Pose_GAN(Network):
 		(self.feed('g1_result').stop_gradient(name = 'barrier'))
 		(self.feed('ia_input', 'barrier')
 			 .concatenate(name = 'concat', axis = -1)
-			 .conv2d(3, 128, 1, 1, name = 'conv_g2')
-			 .conv2d(3, 128, 1, 1, name = 'g2_block1_conv1')
-			 .conv2d(3, 128, 1, 1, name = 'g2_block1_conv2'))
+			 .conv2d(3, 128, 1, 1, name = 'conv_g2', appendList = self.g2_var)
+			 .conv2d(3, 128, 1, 1, name = 'g2_block1_conv1', appendList = self.g2_var)
+			 .conv2d(3, 128, 1, 1, name = 'g2_block1_conv2', appendList = self.g2_var))
 		(self.feed('conv_g2', 'g2_block1_conv2')
 			 .add(name = 'g2_add_1')
-			 .conv2d(3, 256, 2, 2, name = 'g2_down_sample1', relu = False)
-			 .conv2d(3, 256, 1, 1, name = 'g2_block2_conv1')
-			 .conv2d(3, 256, 1, 1, name = 'g2_block2_conv2'))
+			 .conv2d(3, 256, 2, 2, name = 'g2_down_sample1', relu = False, appendList = self.g2_var)
+			 .conv2d(3, 256, 1, 1, name = 'g2_block2_conv1', appendList = self.g2_var)
+			 .conv2d(3, 256, 1, 1, name = 'g2_block2_conv2', appendList = self.g2_var))
 		(self.feed('g2_down_sample1', 'g2_block2_conv2')
 			 .add(name = 'g2_add_2')
-			 .conv2d(3, 384, 2, 2, name = 'g2_down_sample2', relu = False)
-			 .conv2d(3, 384, 1, 1, name = 'g2_block3_conv1')
-			 .conv2d(3, 384, 1, 1, name = 'g2_block3_conv2'))
+			 .conv2d(3, 384, 2, 2, name = 'g2_down_sample2', relu = False, appendList = self.g2_var)
+			 .conv2d(3, 384, 1, 1, name = 'g2_block3_conv1', appendList = self.g2_var)
+			 .conv2d(3, 384, 1, 1, name = 'g2_block3_conv2', appendList = self.g2_var))
 		(self.feed('g2_down_sample2', 'g2_block3_conv2')
 			 .add(name = 'g2_add_3')
-			 .conv2d(3, 512, 2, 2, name = 'g2_down_sample3', relu = False)
-			 .conv2d(3, 512, 1, 1, name = 'g2_middle_conv1')
-			 .conv2d(3, 512, 1, 1, name = 'g2_middle_conv2'))
+			 .conv2d(3, 512, 2, 2, name = 'g2_down_sample3', relu = False, appendList = self.g2_var)
+			 .conv2d(3, 512, 1, 1, name = 'g2_middle_conv1', appendList = self.g2_var)
+			 .conv2d(3, 512, 1, 1, name = 'g2_middle_conv2', appendList = self.g2_var))
 
 
 		#=============G2 decoder============
 		print('=============G2 decoder=============')
 		(self.feed('g2_down_sample3', 'g2_middle_conv2')
 			 .add(name = 'g2_add_4')
-			 .conv2d_tran(3, 384, 2, 2, name = 'g2_up_sample1', relu = False))
+			 .conv2d_tran(3, 384, 2, 2, name = 'g2_up_sample1', relu = False, appendList = self.g2_var))
 		(self.feed('g2_up_sample1', 'g2_block3_conv2')
 			 .add(name = 'g2_skip_add1')
-			 .conv2d_tran(3, 384, 1, 1, name = 'g2_block1_dconv1')
-			 .conv2d_tran(3, 384, 1, 1, name = 'g2_block1_dconv2'))
+			 .conv2d_tran(3, 384, 1, 1, name = 'g2_block1_dconv1', appendList = self.g2_var)
+			 .conv2d_tran(3, 384, 1, 1, name = 'g2_block1_dconv2', appendList = self.g2_var))
 		(self.feed('g2_skip_add1', 'g2_block1_dconv2')
 			 .add(name = 'g2_back_add1')
-			 .conv2d_tran(3, 256, 2, 2, name = 'g2_up_sample2', relu = False))
+			 .conv2d_tran(3, 256, 2, 2, name = 'g2_up_sample2', relu = False, appendList = self.g2_var))
 		(self.feed('g2_up_sample2', 'g2_block2_conv2')
 			 .add(name = 'g2_skip_add2')
-			 .conv2d_tran(3, 256, 1, 1, name = 'g2_block2_dconv1')
-			 .conv2d_tran(3, 256, 1, 1, name = 'g2_block2_dconv2'))
+			 .conv2d_tran(3, 256, 1, 1, name = 'g2_block2_dconv1', appendList = self.g2_var)
+			 .conv2d_tran(3, 256, 1, 1, name = 'g2_block2_dconv2', appendList = self.g2_var))
 		(self.feed('g2_skip_add2', 'g2_block2_dconv2')
 			 .add(name = 'g2_back_add2')
-			 .conv2d_tran(3, 128, 2, 2, name = 'g2_up_sample3', relu = False))
+			 .conv2d_tran(3, 128, 2, 2, name = 'g2_up_sample3', relu = False, appendList = self.g2_var))
 		(self.feed('g2_up_sample3', 'g2_block1_conv2')
 			 .add(name = 'g2_skip_add3')
-			 .conv2d_tran(3, 128, 1, 1, name = 'g2_block3_dconv1')
-			 .conv2d_tran(3, 128, 1, 1, name = 'g2_block3_dconv2'))
+			 .conv2d_tran(3, 128, 1, 1, name = 'g2_block3_dconv1', appendList = self.g2_var)
+			 .conv2d_tran(3, 128, 1, 1, name = 'g2_block3_dconv2', appendList = self.g2_var))
 		(self.feed('g2_skip_add3', 'g2_block3_dconv2')
 			 .add(name = 'g2_back_add3')
-			 .conv2d_tran(3, 3, 1, 1, name = 'g2_result', relu = False))
+			 .conv2d_tran(3, 3, 1, 1, name = 'g2_result', relu = False, appendList = self.g2_var))
 
 		#=============Final output============
 		print('=============Final output=============')
@@ -184,7 +185,8 @@ class Pose_GAN(Network):
 			 .fc(1, name = 'logit_real', scope = 'logit', relu = False, reuse = False)
 			 .sigmoid(name = 'd_real', loss = False))
 
-		(self.feed('ia_input', 'final_output')
+		(self.feed('final_output').stop_gradient(name = 'barrier2'))
+		(self.feed('ia_input', 'barrier2')
 			 .concatenate(name = 'd_fake_input', axis = -1)
 			 .conv2d(5, 64, 2, 2, name = 'd_fake_conv1', scope = 'd_conv_1', relu = False)
 			 .leaky_relu(name = 'd_fake_lrelu1')
@@ -255,6 +257,7 @@ class Pose_GAN(Network):
 if __name__ == '__main__':
 	model = Pose_GAN()
 	a, b, c = model.build_loss()
+	print(model.g2_var)
 
 
 

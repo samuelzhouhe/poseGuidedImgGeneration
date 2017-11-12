@@ -17,7 +17,7 @@ tf.summary.scalar("dloss", d_loss)
 sess = tf.Session()
 optimizer = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5)
 train_g1 = optimizer.minimize(g1_loss)
-train_g2 = optimizer.minimize(g2_loss)
+train_g2 = optimizer.minimize(g2_loss, var_list = model.g2_var)
 train_d = optimizer.minimize(d_loss)
 
 saver = tf.train.Saver(max_to_keep=2)
@@ -84,7 +84,7 @@ if (start_itr < cfg.MAXITERATION):
 saver = tf.train.Saver(max_to_keep=2)
 # step 2: train g2 and d
 for itr in range(cfg.MAXITERATION-1, 2*cfg.MAXITERATION):
-    for _ in range(5):
+    for _ in range(2):
         g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE_G2D, trainorval='TRAIN')
         feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
                      model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
@@ -105,7 +105,7 @@ for itr in range(cfg.MAXITERATION-1, 2*cfg.MAXITERATION):
     if itr == cfg.MAXITERATION - 1 or itr %1000==0:
         saver.save(sess, cfg.LOGDIR + "/model.ckpt", global_step=itr)
 
-    if itr % 1000 == 0:
+    if itr % 100 == 0:
         final_output, g2_out, g1_out = sess.run([model.final_output, model.g2_output, model.g1_output], feed_dict=feed_dict)
         size = final_output.shape[0]
         dir_name = cfg.RESULT_DIR + '/g2_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
