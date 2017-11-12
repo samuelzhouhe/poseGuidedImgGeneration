@@ -204,6 +204,7 @@ class Pose_GAN(Network):
 
 			t_var = tf.trainable_variables()
 			self.d_var = [var for var in t_var if 'd_' in var.name]
+			
 	@property
 	def d_fake(self):
 		return self.layers['d_fake']

@@ -7,24 +7,6 @@ from config import cfg
 
 WEIGHT_DECAY = cfg.WEIGHT_DECAY
 
-class batch_norm_layer(object):
-  def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm", is_training = True, reuse = False):
-    with tf.variable_scope(name, reuse = False):
-      self.epsilon  = epsilon
-      self.momentum = momentum
-      self.name = name
-      self.is_training = is_training
-
-  def __call__(self, x, reuse = True):
-  	with tf.variable_scope(name, reuse = reuse):
-	    return tf.contrib.layers.batch_norm(x,
-	                      decay = self.momentum, 
-	                      updates_collections = None,
-	                      epsilon = self.epsilon,
-	                      scale = True,
-	                      is_training = self.is_training,
-	                      scope = self.name)
-
 def decorated_layer(layer):
 	def wrapper(self, *args,  **kwargs):
 		name = kwargs.setdefault('name', self.get_unique_name(layer.__name__))
@@ -279,23 +261,6 @@ class Network(object):
 			return tf.nn.relu(temp_layer)
 		else:
 			return temp_layer
-
-	@decorated_layer
-	def reusable_bn(self, input_data, name, relu = True, epsilon = 1e-5, momentum = 0.9, is_training = True):
-		if not name in self.bn_layers:
-			layer = batch_norm_layer(epsilon = epsilon, momentum = momentum, name = name, is_training = is_training)
-			self.bn_layers[name] = layer
-			bn = layer(input_data)
-		else:
-			layer = self.bn_layers[name]
-			bn = layer(input_data, reuse = True)
-		
-		
-
-		if relu:
-			return tf.nn.relu(bn)
-		else:
-			return bn
 
 	@decorated_layer
 	def stop_gradient(self, input_data, name):

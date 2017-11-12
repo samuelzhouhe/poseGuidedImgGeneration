@@ -18,7 +18,7 @@ sess = tf.Session()
 optimizer = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5)
 train_g1 = optimizer.minimize(g1_loss)
 train_g2 = optimizer.minimize(g2_loss, var_list = model.g2_var)
-train_d = optimizer.minimize(d_loss)
+train_d = optimizer.minimize(d_loss, var_list = model.d_var)
 
 saver = tf.train.Saver(max_to_keep=2)
 summary_writer = tf.summary.FileWriter(cfg.LOGDIR, sess.graph)
