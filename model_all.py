@@ -181,7 +181,8 @@ class Pose_GAN(Network):
 			 .conv2d(5, 512, 2, 2, name = 'd_real_conv4', scope = 'd_conv_4', relu = False, reuse = False)
 			 .batch_normalization(name = 'd_real_bn3', scope = 'd_bn3', relu = False, trainable = True, updates_collections = None)
 			 .leaky_relu(name = 'd_real_lrelu4')
-			 .fc(1, name = 'logit_real', scope = 'logit', relu = False, reuse = False))
+			 .fc(1, name = 'logit_real', scope = 'logit', relu = False, reuse = False)
+			 .sigmoid(name = 'd_real', loss = False))
 
 		(self.feed('ia_input', 'final_output')
 			 .concatenate(name = 'd_fake_input', axis = -1)
@@ -196,11 +197,18 @@ class Pose_GAN(Network):
 			 .conv2d(5, 512, 2, 2, name = 'd_fake_conv4', scope = 'd_conv_4', relu = False)
 			 .batch_normalization(name = 'd_fake_bn3', scope = 'd_bn3', relu = False, trainable = True, updates_collections = None)
 			 .leaky_relu(name = 'd_fake_lrelu4')
-			 .fc(1, name = 'logit_fake', scope = 'logit', relu = False))
+			 .fc(1, name = 'logit_fake', scope = 'logit', relu = False)
+			 .sigmoid(name = 'd_fake', loss = False))
 
 
 
+	@property
+	def d_fake(self):
+		return self.layers['d_fake']
 
+	@property
+	def d_real(self):
+		return self.layers['d_real']
 
 	@property
 	def g1_output(self):
@@ -236,7 +244,7 @@ class Pose_GAN(Network):
 		(self.feed('logit_fake')
 			 .sigmoid(name = 'g2_adv_loss', labels = tf.ones_like(self.layers['logit_fake']), loss = True))
 
-		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['g2_result'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
+		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['final_output'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
 		self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 
 		#=============l2 regularization loss============

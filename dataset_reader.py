@@ -145,8 +145,6 @@ class DataLoader:
             key_dir = os.path.join(keypoints_dir, folder)
 
             for folder2 in os.listdir(key_dir):
-                print("Curr_dir is ", curr_dir)
-                print("folder 2 is ", folder2)
                 curr_dir1 = os.path.join(curr_dir, folder2)
                 key_dir1 = os.path.join(key_dir, folder2)
 
