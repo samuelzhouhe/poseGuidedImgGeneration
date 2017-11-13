@@ -101,8 +101,9 @@ class Network(object):
 				scope = None, relu = True, padding = 'SAME', appendList = None, reuse = None, trainable = True):
 
 		depth = input_data.get_shape().as_list()[-1]
-		if reuse is None and not scope is None:
-			reuse = True
+
+		if reuse == True:
+			assert not scope is None
 
 		if scope is None:
 			scope = name
@@ -131,8 +132,8 @@ class Network(object):
 
 		depth = input_data.get_shape().as_list()[-1]
 
-		if reuse is None and not scope is None:
-			reuse = True
+		if reuse == True:
+			assert not scope is None
 
 		if scope is None:
 			scope = name
@@ -167,8 +168,8 @@ class Network(object):
 	def fc(self, input_data, output_dim, name, collection = None, scope = None, relu = True, appendList = None, reuse = None, trainable = True):
 		assert not isinstance(input_data, list)
 
-		if reuse is None and not scope is None:
-			reuse = True
+		if reuse == True:
+			assert not scope is None
 
 		if scope is None:
 			scope = name
@@ -254,6 +255,8 @@ class Network(object):
 	@decorated_layer
 	def batch_normalization(self, input_data, name, scope = None, relu = True, decay = 0.9, epsilon = 1e-5, updates_collections = tf.GraphKeys.UPDATE_OPS, trainable = False, appendList = None, reuse = None):
 		with tf.variable_scope(scope, reuse = reuse):
+			if reuse == True:
+				assert not scope is None
 			temp_layer =  tf.contrib.layers.batch_norm(input_data, decay = decay, scale = True, 
 													center=True, variables_collections = scope, epsilon = epsilon, is_training = trainable)
 		if relu:

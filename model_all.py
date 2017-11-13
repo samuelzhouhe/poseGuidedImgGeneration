@@ -171,40 +171,40 @@ class Pose_GAN(Network):
 		with tf.variable_scope('Discriminator'):
 			(self.feed('ia_input', 'ib_input')
 				 .concatenate(name = 'd_real_input', axis = -1)
-				 .conv2d(5, 64, 2, 2, name = 'd_real_conv1', scope = 'd_conv_1', relu = False, reuse = False)
+				 .conv2d(5, 64, 2, 2, name = 'd_real_conv1', scope = 'd_conv_1', relu = False)
 				 .leaky_relu(name = 'd_real_lrelu1')
-				 .conv2d(5, 128, 2, 2, name = 'd_real_conv2', scope = 'd_conv_2', relu = False, reuse = False)
+				 .conv2d(5, 128, 2, 2, name = 'd_real_conv2', scope = 'd_conv_2', relu = False)
 				 .batch_normalization(name = 'd_real_bn1', scope = 'd_bn1',relu = False, trainable = True, updates_collections = None)
 				 .leaky_relu(name = 'd_real_lrelu2')
-				 .conv2d(5, 256, 2, 2, name = 'd_real_conv3', scope = 'd_conv_3', relu = False, reuse = False)
+				 .conv2d(5, 256, 2, 2, name = 'd_real_conv3', scope = 'd_conv_3', relu = False)
 				 .batch_normalization(name = 'd_real_bn2', scope = 'd_bn2', relu = False, trainable = True, updates_collections = None)
 				 .leaky_relu(name = 'd_real_lrelu3')
-				 .conv2d(5, 512, 2, 2, name = 'd_real_conv4', scope = 'd_conv_4', relu = False, reuse = False)
+				 .conv2d(5, 512, 2, 2, name = 'd_real_conv4', scope = 'd_conv_4', relu = False)
 				 .batch_normalization(name = 'd_real_bn3', scope = 'd_bn3', relu = False, trainable = True, updates_collections = None)
 				 .leaky_relu(name = 'd_real_lrelu4')
-				 .fc(1, name = 'logit_real', scope = 'logit', relu = False, reuse = False)
+				 .fc(1, name = 'logit_real', scope = 'logit', relu = False)
 				 .sigmoid(name = 'd_real', loss = False))
 
 			(self.feed('ia_input', 'final_output')
 				 .concatenate(name = 'd_fake_input', axis = -1)
-				 .conv2d(5, 64, 2, 2, name = 'd_fake_conv1', scope = 'd_conv_1', relu = False)
+				 .conv2d(5, 64, 2, 2, name = 'd_fake_conv1', scope = 'd_conv_1', relu = False, reuse = True)
 				 .leaky_relu(name = 'd_fake_lrelu1')
-				 .conv2d(5, 128, 2, 2, name = 'd_fake_conv2', scope = 'd_conv_2', relu = False)
+				 .conv2d(5, 128, 2, 2, name = 'd_fake_conv2', scope = 'd_conv_2', relu = False, reuse = True)
 				 .batch_normalization(name = 'd_fake_bn1', scope = 'd_bn1',relu = False, trainable = True, updates_collections = None, reuse = True)
 				 .leaky_relu(name = 'd_fake_lrelu2')
-				 .conv2d(5, 256, 2, 2, name = 'd_fake_conv3', scope = 'd_conv_3', relu = False)
+				 .conv2d(5, 256, 2, 2, name = 'd_fake_conv3', scope = 'd_conv_3', relu = False, reuse = True)
 				 .batch_normalization(name = 'd_fake_bn2', scope = 'd_bn2', relu = False, trainable = True, updates_collections = None, reuse = True)
 				 .leaky_relu(name = 'd_fake_lrelu3')
-				 .conv2d(5, 512, 2, 2, name = 'd_fake_conv4', scope = 'd_conv_4', relu = False)
+				 .conv2d(5, 512, 2, 2, name = 'd_fake_conv4', scope = 'd_conv_4', relu = False, reuse = True)
 				 .batch_normalization(name = 'd_fake_bn3', scope = 'd_bn3', relu = False, trainable = True, updates_collections = None, reuse = True)
 				 .leaky_relu(name = 'd_fake_lrelu4')
-				 .fc(1, name = 'logit_fake', scope = 'logit', relu = False)
+				 .fc(1, name = 'logit_fake', scope = 'logit', relu = False, reuse = True)
 				 .sigmoid(name = 'd_fake', loss = False))
 
 
 			t_var = tf.trainable_variables()
 			self.d_var = [var for var in t_var if 'd_' in var.name]
-			
+
 	@property
 	def d_fake(self):
 		return self.layers['d_fake']
@@ -258,7 +258,15 @@ class Pose_GAN(Network):
 if __name__ == '__main__':
 	model = Pose_GAN()
 	a, b, c = model.build_loss()
-	#print(model.g2_var)
+	print('==========================')
+	counter = 0
+	for var in model.g2_var:
+		counter += 1
+		print(var.name)
+	print('number of variables:', counter)
+	print('==========================')
+	for var in model.d_var:
+		print(var.name)
 
 
 
