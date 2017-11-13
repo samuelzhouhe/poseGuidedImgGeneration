@@ -250,7 +250,7 @@ class Pose_GAN(Network):
 
 		l1_distance2 = tf.reduce_sum(tf.abs(tf.multiply(self.layers['final_output'] - self.layers['ib_input'], self.layers['mb_plus_1'])), axis = [1, 2, 3])
 		#self.layers['g2_loss'] = tf.reduce_mean(self.layers['g2_adv_loss']) + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
-		self.layers['g2_loss'] = likely_hood + tf.reduce_mean(l1_distance2)
+		self.layers['g2_loss'] = likely_hood + cfg.LAMBDA * tf.reduce_mean(l1_distance2)
 		#=============l2 regularization loss============
 		# self.layers['l2_reg_loss'] = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
