@@ -204,7 +204,15 @@ class Pose_GAN(Network):
 
 			t_var = tf.trainable_variables()
 			self.d_var = [var for var in t_var if 'd_' in var.name]
-			
+
+			self.clip_d = [p.assign(tf.clip_by_value(p,-0.01,0.01)) for p in self.d_var]
+			self.d_loss = tf.reduce_mean(self.layers['logit_real']) - tf.reduce_mean(self.layers['logit_fake'])
+
+
+	@property
+	def d_loss_total(self):
+		return self.d_loss
+
 	@property
 	def d_fake(self):
 		return self.layers['d_fake']

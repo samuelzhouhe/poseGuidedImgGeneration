@@ -17,9 +17,9 @@ tf.summary.scalar("dloss", d_loss)
 sess = tf.Session()
 
 train_g1 = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(g1_loss)
-train_g2 = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(g2_loss, var_list = model.g2_var)
-train_d = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(d_loss, var_list = model.d_var)
-
+train_g2 = tf.train.RMSPropOptimizer(learning_rate=2e-5).minimize(g2_loss, var_list = model.g2_var)
+train_d = tf.train.RMSPropOptimizer(learning_rate=2e-5).minimize(d_loss, var_list = model.d_var)
+clip_d = model.clip_d
 saver = tf.train.Saver(max_to_keep=2)
 summary_writer = tf.summary.FileWriter(cfg.LOGDIR, sess.graph)
 sess.run(tf.global_variables_initializer())
@@ -83,14 +83,18 @@ if (start_itr < cfg.MAXITERATION):
 
 saver = tf.train.Saver(max_to_keep=2)
 # step 2: train g2 and d
-for itr in range(cfg.MAXITERATION-1, 4*cfg.MAXITERATION):
+for itr in range(start_itr, 10*cfg.MAXITERATION):
     g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE_G2D, trainorval='TRAIN')
     feed_dict = {model.g1_input: g1_feed, model.ia_input:conditional_image,
                  model.ib_input: target_image, model.mb_plus_1:target_morphologicals}
     sess.run([train_g2], feed_dict=feed_dict)
 
 
-    sess.run([train_d], feed_dict=feed_dict)
+    sess.run([train_d, clip_d], feed_dict=feed_dict)
+    sess.run([train_d, clip_d], feed_dict=feed_dict)
+    sess.run([train_d, clip_d], feed_dict=feed_dict)
+    sess.run([train_d, clip_d], feed_dict=feed_dict)
+    sess.run([train_d, clip_d], feed_dict=feed_dict)
 
     if itr %10 == 0:
         fake_score, real_score, g2loss, dloss, summaryString = sess.run([model.d_fake, model.d_real, g2_loss, d_loss, summary_merge],feed_dict=feed_dict)
