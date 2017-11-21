@@ -106,7 +106,8 @@ class Pose_GAN(Network):
 				 .conv2d_tran(3, 128, 1, 1, name = 'block6_dconv2', trainable = self.traing1ornot))
 			(self.feed('up_sample5', 'block1_conv2')
 				 .add(name = 'back_add_6')
-				 .conv2d_tran(3, 3, 1, 1, name = 'g1_result', relu = False, trainable = self.traing1ornot))
+				 .conv2d_tran(3, 3, 1, 1, name = 'dconv_out', relu = False, trainable = self.traing1ornot)
+				 .tanh(name = 'g1_result'))
 
 			#=============G2 encoder============
 		with tf.name_scope('G2'):
@@ -159,7 +160,8 @@ class Pose_GAN(Network):
 				 .conv2d_tran(3, 128, 1, 1, name = 'g2_block3_dconv2', appendList = self.g2_var))
 			(self.feed('g2_skip_add3', 'g2_block3_dconv2')
 				 .add(name = 'g2_back_add3')
-				 .conv2d_tran(3, 3, 1, 1, name = 'g2_result', relu = False, appendList = self.g2_var))
+				 .conv2d_tran(3, 3, 1, 1, name = 'g2_dconv_out', relu = False, appendList = self.g2_var)
+				 .tanh(name = 'g2_result'))
 
 		#=============Final output============
 		print('=============Final output=============')

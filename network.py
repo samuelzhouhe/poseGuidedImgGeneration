@@ -269,6 +269,10 @@ class Network(object):
 	def stop_gradient(self, input_data, name):
 		return tf.stop_gradient(input_data, name = name)
 
+	@decorated_layer
+	def tanh(self, input_data, name):
+		return tf.tanh(input_data)
+
 	def setup(self):
 		raise NotImplementedError('Function setup(self) must be implemented!')
 

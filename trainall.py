@@ -6,6 +6,7 @@ import os
 import cv2
 import datetime
 import numpy as np
+from scipy.misc import imsave
 
 dataloader = DataLoader()
 model = Pose_GAN()
@@ -17,8 +18,8 @@ tf.summary.scalar("dloss", d_loss)
 sess = tf.Session()
 
 train_g1 = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(g1_loss)
-train_g2 = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(g2_loss, var_list = model.g2_var)
-train_d = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(d_loss, var_list = model.d_var)
+train_g2 = tf.train.AdamOptimizer(learning_rate=1e-6, beta1=0.5).minimize(g2_loss, var_list = model.g2_var)
+train_d = tf.train.AdamOptimizer(learning_rate=1e-6, beta1=0.5).minimize(d_loss, var_list = model.d_var)
 
 saver = tf.train.Saver(max_to_keep=2)
 summary_writer = tf.summary.FileWriter(cfg.LOGDIR, sess.graph)
@@ -81,6 +82,10 @@ if (start_itr < cfg.MAXITERATION):
             val_g1loss = sess.run(g1_loss,feed_dict=feed_dict)
             print("Validation G1 loss at itr ", itr, " is ", val_g1loss)
 
+def transform(img):
+    return (img + 1) / 2.0
+
+
 saver = tf.train.Saver(max_to_keep=2)
 # step 2: train g2 and d
 for itr in range(cfg.MAXITERATION-1, 4*cfg.MAXITERATION):
@@ -107,20 +112,21 @@ for itr in range(cfg.MAXITERATION-1, 4*cfg.MAXITERATION):
     if itr % 100 == 0:
         final_output, g2_out, g1_out = sess.run([model.final_output, model.g2_output, model.g1_output], feed_dict=feed_dict)
         size = final_output.shape[0]
+        final_output = transform(final_output)
         dir_name = cfg.RESULT_DIR + '/g2_iter_' + str(itr) + 'at' + str(datetime.datetime.now())
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
         for i in range(size):
             name = dir_name + '/sample' + str(i + 1) + 'finalout.jpg'
-            cv2.imwrite(name, final_output[i])
+            imsave(name, final_output[i])
             name = dir_name + '/sample' + str(i + 1) + 'g2out.jpg'
-            cv2.imwrite(name, g2_out[i])
+            imsave(name, g2_out[i])
             name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
-            cv2.imwrite(name, g1_out[i])
+            imsave(name, g1_out[i])
             name_cond = dir_name + '/sample' + str(i + 1) + 'conditionalimg.jpg'
-            cv2.imwrite(name_cond, conditional_image[i, :, :, :])
+            imsave(name_cond, conditional_image[i, :, :, :])
             name_target = dir_name + '/sample' + str(i + 1) + 'target.jpg'
-            cv2.imwrite(name_target, target_image[i, :, :, :])
+            imsave(name_target, target_image[i, :, :, :])
 
         g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE,
                                                                                                 trainorval='VALIDATION')
@@ -128,3 +134,4 @@ for itr in range(cfg.MAXITERATION-1, 4*cfg.MAXITERATION):
                      model.ib_input: target_image, model.mb_plus_1: target_morphologicals}
         g2lossvalue, dlossvalue = sess.run([g2_loss, d_loss], feed_dict=feed_dict)
         print("Validation G2 D loss at itr ", itr, " is ", g2lossvalue, " and ", dlossvalue)
+        
