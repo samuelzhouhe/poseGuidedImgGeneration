@@ -6,7 +6,7 @@ import os
 import cv2
 import datetime
 import numpy as np
-from scipy.misc import imsave
+import scipy.misc
 
 dataloader = DataLoader()
 model = Pose_GAN()
@@ -118,15 +118,15 @@ for itr in range(cfg.MAXITERATION-1, 4*cfg.MAXITERATION):
             os.makedirs(dir_name)
         for i in range(size):
             name = dir_name + '/sample' + str(i + 1) + 'finalout.jpg'
-            imsave(name, final_output[i])
+            scipy.misc.imsave(name, final_output[i])
             name = dir_name + '/sample' + str(i + 1) + 'g2out.jpg'
-            imsave(name, g2_out[i])
+            scipy.misc.imsave(name, g2_out[i])
             name = dir_name + '/sample' + str(i + 1) + 'g1out.jpg'
-            imsave(name, g1_out[i])
+            scipy.misc.imsave(name, g1_out[i])
             name_cond = dir_name + '/sample' + str(i + 1) + 'conditionalimg.jpg'
-            imsave(name_cond, conditional_image[i, :, :, :])
+            scipy.misc.imsave(name_cond, conditional_image[i, :, :, :])
             name_target = dir_name + '/sample' + str(i + 1) + 'target.jpg'
-            imsave(name_target, target_image[i, :, :, :])
+            scipy.misc.imsave(name_target, target_image[i, :, :, :])
 
         g1_feed, conditional_image, target_image, target_morphologicals = dataloader.next_batch(cfg.BATCH_SIZE,
                                                                                                 trainorval='VALIDATION')
