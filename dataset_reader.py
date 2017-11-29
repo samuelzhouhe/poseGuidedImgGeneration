@@ -90,6 +90,7 @@ class DataLoader:
 
                 heatmap = np.expand_dims(heatmap, axis=0)
                 dilatedMapofAllPoints = np.expand_dims(dilatedMapofAllPoints, axis=0)
+                img = img/127.5 - 1.0
 
                 return img, heatmap, dilatedMapofAllPoints
 

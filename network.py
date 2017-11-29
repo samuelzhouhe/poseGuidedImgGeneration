@@ -6,7 +6,6 @@ import cv2
 from config import cfg
 
 
-
 WEIGHT_DECAY = cfg.WEIGHT_DECAY
 
 def decorated_layer(layer):
@@ -99,12 +98,13 @@ class Network(object):
 
 
 	@decorated_layer
-	def conv2d(self, input_data, k_w, k_d, s_w, s_h, name, collection = None, 
-				scope = None, relu = True, padding = 'SAME', appendList = None, reuse = None, trainable = True):
+	def  	conv2d(self, input_data, k_w, k_d, s_w, s_h, name, collection = None, 
+				scope = None, relu = True, padding = 'SAME', appendList = None, reuse = False, trainable = True):
 
 		depth = input_data.get_shape().as_list()[-1]
-		if reuse is None and not scope is None:
-			reuse = True
+
+		if reuse == True:
+			assert not scope is None
 
 		if scope is None:
 			scope = name
@@ -129,12 +129,12 @@ class Network(object):
 
 	@decorated_layer
 	def conv2d_tran(self, input_data, k_w, k_d, s_w, s_h, name, output_shape = None, 
-			scope = None, collection = None, relu = True, padding = 'SAME', appendList = None, reuse = None, trainable = True):
+			scope = None, collection = None, relu = True, padding = 'SAME', appendList = None, reuse = False, trainable = True):
 
 		depth = input_data.get_shape().as_list()[-1]
 
-		if reuse is None and not scope is None:
-			reuse = True
+		if reuse == True:
+			assert not scope is None
 
 		if scope is None:
 			scope = name
@@ -166,11 +166,11 @@ class Network(object):
 
 
 	@decorated_layer
-	def fc(self, input_data, output_dim, name, collection = None, scope = None, relu = True, appendList = None, reuse = None, trainable = True):
+	def fc(self, input_data, output_dim, name, collection = None, scope = None, relu = True, appendList = None, reuse = False, trainable = True):
 		assert not isinstance(input_data, list)
 
-		if reuse is None and not scope is None:
-			reuse = True
+		if reuse == True:
+			assert not scope is None
 
 		if scope is None:
 			scope = name
@@ -254,9 +254,13 @@ class Network(object):
 		return tf.reduce_sum(weight_variables, axis = 1)
 
 	@decorated_layer
-	def batch_normalization(self, input_data, name, scope = None, relu = True, decay = 0.9, epsilon = 1e-5, updates_collections = tf.GraphKeys.UPDATE_OPS, trainable = False):
-		temp_layer =  tf.contrib.layers.batch_norm(input_data, decay = decay, scale = True, 
-													center=True, variables_collections = scope, epsilon = epsilon, is_training = trainable, scope = name)
+
+	def batch_normalization(self, input_data, name, scope = None, relu = True, decay = 0.9, epsilon = 1e-5, updates_collections = tf.GraphKeys.UPDATE_OPS, trainable = False, appendList = None, reuse = False):
+		with tf.variable_scope(scope, reuse = reuse):
+			if reuse == True:
+				assert not scope is None
+			temp_layer =  tf.contrib.layers.batch_norm(input_data, decay = decay, scale = True, 
+													center=True, variables_collections = scope, epsilon = epsilon, is_training = trainable)
 		if relu:
 			return tf.nn.relu(temp_layer)
 		else:
@@ -265,6 +269,10 @@ class Network(object):
 	@decorated_layer
 	def stop_gradient(self, input_data, name):
 		return tf.stop_gradient(input_data, name = name)
+
+	@decorated_layer
+	def tanh(self, input_data, name):
+		return tf.tanh(input_data)
 
 	def setup(self):
 		raise NotImplementedError('Function setup(self) must be implemented!')
