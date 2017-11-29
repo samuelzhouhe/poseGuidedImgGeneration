@@ -5,25 +5,9 @@ import random
 import cv2
 from config import cfg
 
+
+
 WEIGHT_DECAY = cfg.WEIGHT_DECAY
-
-class batch_norm_layer(object):
-  def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm", is_training = True, reuse = False):
-    with tf.variable_scope(name, reuse = False):
-      self.epsilon  = epsilon
-      self.momentum = momentum
-      self.name = name
-      self.is_training = is_training
-
-  def __call__(self, x, reuse = True):
-  	with tf.variable_scope(name, reuse = reuse):
-	    return tf.contrib.layers.batch_norm(x,
-	                      decay = self.momentum, 
-	                      updates_collections = None,
-	                      epsilon = self.epsilon,
-	                      scale = True,
-	                      is_training = self.is_training,
-	                      scope = self.name)
 
 def decorated_layer(layer):
 	def wrapper(self, *args,  **kwargs):
@@ -270,32 +254,13 @@ class Network(object):
 		return tf.reduce_sum(weight_variables, axis = 1)
 
 	@decorated_layer
-	def batch_normalization(self, input_data, name, scope = None, relu = True, decay = 0.9, epsilon = 1e-5, updates_collections = tf.GraphKeys.UPDATE_OPS, trainable = False, appendList = None, reuse = None):
-		with tf.variable_scope(scope, reuse = reuse):
-			temp_layer =  tf.contrib.layers.batch_norm(input_data, decay = decay, scale = True, 
-													center=True, variables_collections = scope, epsilon = epsilon, is_training = trainable)
+	def batch_normalization(self, input_data, name, scope = None, relu = True, decay = 0.9, epsilon = 1e-5, updates_collections = tf.GraphKeys.UPDATE_OPS, trainable = False):
+		temp_layer =  tf.contrib.layers.batch_norm(input_data, decay = decay, scale = True, 
+													center=True, variables_collections = scope, epsilon = epsilon, is_training = trainable, scope = name)
 		if relu:
-			
 			return tf.nn.relu(temp_layer)
 		else:
 			return temp_layer
-
-	@decorated_layer
-	def reusable_bn(self, input_data, name, relu = True, epsilon = 1e-5, momentum = 0.9, is_training = True):
-		if not name in self.bn_layers:
-			layer = batch_norm_layer(epsilon = epsilon, momentum = momentum, name = name, is_training = is_training)
-			self.bn_layers[name] = layer
-			bn = layer(input_data)
-		else:
-			layer = self.bn_layers[name]
-			bn = layer(input_data, reuse = True)
-		
-		
-
-		if relu:
-			return tf.nn.relu(bn)
-		else:
-			return bn
 
 	@decorated_layer
 	def stop_gradient(self, input_data, name):
@@ -309,5 +274,4 @@ class Network(object):
 		count = len([name for name, _ in self.layers.items() if name.startswith(layer_name)])
 		new_name = layer_name + '_' + str(count + 1)
 		return new_name
-
 
