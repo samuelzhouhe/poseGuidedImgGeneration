@@ -12,10 +12,6 @@ import copy
 import shutil
 import random
 
-IMG_ROOTDIR = "./dataset/Img/img"
-KEYPOINTS_ROOTDIR = "./dataset/Img/img-keypoints"
-GENERAL_ROOTDIR = "./dataset/Img/set"
-TOTAL_CLOTHES = 7982  # 0001 TO 7982
 
 
 class DataLoader:
@@ -24,7 +20,6 @@ class DataLoader:
     morphologicals = None  # (?,256,256)
     pairs = []
     groupsofIndices = []
-
 
 
     def __init__(self):
@@ -46,7 +41,6 @@ class DataLoader:
 
     def process_oneimg(self, fulldir):
 
-        # fulldir = root + '/' + filename
         if not "flat" in fulldir:
             img = cv2.imread(fulldir)
             if img is not None:
@@ -100,8 +94,6 @@ class DataLoader:
         target_image = np.zeros([batch_size, 256, 256, 3])
         target_morphologicals = np.zeros([batch_size, 256, 256])
 
-        # clothesIndices = np.arange(1, TOTAL_CLOTHES)
-        # np.random.shuffle(clothesIndices)
         pairstofeed = None
         if trainorval == 'TRAIN':
             pairstofeed = random.sample(self.trainingPairs, batch_size)
@@ -125,16 +117,14 @@ class DataLoader:
             target_morphologicals = np.flip(target_morphologicals,axis=2)
         return g1_feed, conditional_image, target_image, target_morphologicals
 
-    # def set(self, folder_dir):
-    #     file_names = os.listdir(folder_dir)
     def extract(self):
         root = os.path.join(os.getcwd(), 'dataset', 'Img')
         root = os.path.abspath(root)
 
         img_dir = os.path.join(root, 'img')
         keypoints_dir = os.path.join(root, 'img-keypoints')
-
         name = os.path.join(root, 'set')
+
         if os.path.exists(name):
             shutil.rmtree(name)
         if not os.path.exists(name):
