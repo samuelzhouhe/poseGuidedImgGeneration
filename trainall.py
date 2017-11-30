@@ -25,6 +25,9 @@ train_g1 = tf.train.AdamOptimizer(learning_rate=2e-5, beta1=0.5).minimize(g1_los
 train_g2 = tf.train.AdamOptimizer(learning_rate=1e-6, beta1=0.5).minimize(g2_loss, var_list = model.g2_var)
 train_d = tf.train.AdamOptimizer(learning_rate=1e-6, beta1=0.5).minimize(d_loss, var_list = model.d_var)
 
+if not os.path.exists(cfg.LOGDIR):
+    os.makedirs(cfg.LOGDIR)
+    
 saver = tf.train.Saver(max_to_keep=2)
 summary_writer = tf.summary.FileWriter(cfg.LOGDIR, sess.graph)
 sess.run(tf.global_variables_initializer())
