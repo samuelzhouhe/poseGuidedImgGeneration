@@ -24,19 +24,19 @@ demo.py: use the pre-trained model to demo our result
 System tested: Linux (Ubuntu)
 
 # install pip3
-'''
+```
 sudo apt-get install python3-pip python3-dev
-'''
+```
 # install all required libraries
-'''
+```
 pip3 install -r requirements.txt
-'''
+```
 # use pre-trained model
 Download model.tar.gz to project folder
-Run command: '''tar -xvzf model.tar.gz'''
-Run command: '''rm -rf logs'''
-Run command: '''mv model logs'''
-Run command: '''python3 demo.py'''
+Run command: ```tar -xvzf model.tar.gz```
+Run command: ```rm -rf logs```
+Run command: ```mv model logs```
+Run command: ```python3 demo.py```
 # train from scratch
-Run command: '''rm -rf logs'''
-Run command: python3 trainall.py
+Run command: ```rm -rf logs```
+Run command: ```python3 trainall.py```
