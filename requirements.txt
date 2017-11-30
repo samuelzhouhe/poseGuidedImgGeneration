@@ -1,0 +1,9 @@
+numpy
+scipy
+tensorflow-gpu
+opencv-python
+easydict
+pickle
+matplotlib
+keras
+pillow
