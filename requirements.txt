@@ -1,9 +1,8 @@
 numpy
 scipy
-tensorflow-gpu
+tensorflow-gpu==1.3.0
 opencv-python
 easydict
-pickle
 matplotlib
 keras
 pillow
