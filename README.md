@@ -1,9 +1,5 @@
-# Pose Guided Person Image Generation (NIPS 2017)
-
-This is an unofficial implementation. The paper's author Liqian Ma has released his version at https://github.com/charliememory/Pose-Guided-Person-Image-Generation.
-
-
-
+# TensorFlow implementation of Pose Guided Person Image Generation (NIPS 2017 paper)
+Link to original paper: https://papers.nips.cc/paper/6644-pose-guided-person-image-generation.pdf
 
 # Clone this repository
 ```
@@ -23,13 +19,13 @@ Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepF
 Then put the folder In-shop Clothes Retrieval Benchmark in the project directory, and then rename this directory to 'dataset'. Then extract img.zip file in the ```dataset/Img``` directory
 Then download the keypoint locations prepared by us (using OpenPose, CVPR2017) from https://drive.google.com/file/d/1DwRPXCyVYBmtGa0hO3JlYkrD709s6zca/view?usp=sharing, put it inside the directory dataset/, and extract it.  
 Your dataset directory should look like this:  
-|--poseGuidedImageGeneration  
-    |--dataset  
-        |--Anno  
-        |--Eval  
-        |--Img
-          |--img  
-          |--img-keypoints  
+|--poseGuidedImageGeneration     
+&nbsp;&nbsp;&nbsp;|--dataset     
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--Anno    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--Eval   
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--Img      
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--img  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--img-keypoints  
 
 
 # Use pre-trained model
