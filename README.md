@@ -15,10 +15,14 @@ pip3 install -r requirements.txt
 
 
 # Download dataset and keypoints (Please observe all requirements set by the dataset owner)
-Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html  
-Then put the folder In-shop Clothes Retrieval Benchmark in the project directory, and then rename this directory to 'dataset'. Then extract img.zip file in the ```dataset/Img``` directory
-Then download the keypoint locations prepared by us (using OpenPose, CVPR2017) from https://drive.google.com/file/d/1DwRPXCyVYBmtGa0hO3JlYkrD709s6zca/view?usp=sharing, put it inside the directory dataset/, and extract it.  
-Your dataset directory should look like this:  
+Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html.       
+
+Then put the folder ```In-shop Clothes Retrieval Benchmark/``` inside the project directory (```poseGuidedImgGeneration/```), and then rename ```In-shop Clothes Retrieval Benchmark/``` to ```dataset/```. Then extract the ```img.zip``` file in the ```dataset/Img/``` directory.      
+
+Then download the keypoint locations file ```img-keypoints.zip``` prepared by us (using OpenPose, CVPR2017) from https://drive.google.com/file/d/1DwRPXCyVYBmtGa0hO3JlYkrD709s6zca/view?usp=sharing, put it inside the directory ```dataset/```, and extract it.  
+
+Your file directory should now look like this:    
+
 |--poseGuidedImageGeneration     
 &nbsp;&nbsp;&nbsp;|--dataset     
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--Anno    
@@ -29,7 +33,7 @@ Your dataset directory should look like this:
 
 
 # Use pre-trained model
-Download model.tar.gz from https://drive.google.com/file/d/1z0mtWRSy_ObQ5NfXwXwcT9mIipIPxBsY/view?usp=sharing to project folder, then:
+Download ```model.tar.gz``` from https://drive.google.com/file/d/1z0mtWRSy_ObQ5NfXwXwcT9mIipIPxBsY/view?usp=sharing to project folder, then:
 ```
 tar -xvzf model.tar.gz
 rm -rf logs
@@ -39,7 +43,7 @@ python3 demo.py
 # Train from scratch
 ```
 rm -rf logs
-command: python3 trainall.py
+python3 trainall.py
 ```
 
 # Descriptions of source files
