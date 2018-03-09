@@ -11,24 +11,25 @@ git clone https://github.com/samuelzhouhe/poseGuidedImgGeneration.git
 cd poseGuidedImgGeneration
 ```
 
-# Install pip3
-```sudo apt-get install python3-pip python3-dev```
+# Install pip3 and required libraries
+```
+sudo apt-get install python3-pip python3-dev
+pip3 install -r requirements.txt
+```
 
-# Install all required libraries
-```pip3 install -r requirements.txt```
 
 # Download dataset and keypoints (Please observe all requirements set by the dataset owner)
-Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html
-Then put the folder In-shop Clothes Retrieval Benchmark in the project directory, and then rename this directory to 'dataset'.
-Then download the keypoint locations prepared by us (using OpenPose, CVPR2017) from https://drive.google.com/file/d/1DwRPXCyVYBmtGa0hO3JlYkrD709s6zca/view?usp=sharing, put it inside the directory dataset/, and extract it.
-Your dataset directory should look like this:
-poseGuidedImageGeneration
----dataset
-------Anno
-------Eval
-------Img
----------img
----------img-keypoints
+Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html  
+Then put the folder In-shop Clothes Retrieval Benchmark in the project directory, and then rename this directory to 'dataset'. Then extract img.zip file in the ```dataset/Img``` directory
+Then download the keypoint locations prepared by us (using OpenPose, CVPR2017) from https://drive.google.com/file/d/1DwRPXCyVYBmtGa0hO3JlYkrD709s6zca/view?usp=sharing, put it inside the directory dataset/, and extract it.  
+Your dataset directory should look like this:  
+|--poseGuidedImageGeneration  
+    |--dataset  
+        |--Anno  
+        |--Eval  
+        |--Img
+          |--img  
+          |--img-keypoints  
 
 
 # Use pre-trained model
