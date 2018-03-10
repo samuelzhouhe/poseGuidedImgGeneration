@@ -48,20 +48,20 @@ python3 trainall.py
 
 # Descriptions of source files
 
-config.py: parameters used for our network
+```config.py```: hyperparameters used for our network
 
-dataset_reader.py: load training image data batches and process them for training
+```dataset_reader.py```: load training image data batches and process them for training
 
-model_all.py: build G1, G2 & D in TensorFlow
+```model_all.py```: build G1, G2 & D in TensorFlow
 
-network.py: helper class for building complicated networks
+```network.py```: helper class for building complicated networks
 
-read_keypoint.py: adopt keras realtime multi-person pose estimation model to produce heatmap of human poses
+```read_keypoint.py```: adopt keras realtime multi-person pose estimation model to produce heatmap of human poses (has been done by us)
 
-trainall.py: the main training procedure
+```trainall.py```: the main training procedure including data preprocessing
 
-demo.py: use the pre-trained model to demo our result
+```demo.py```: use the pre-trained model to demo our result
 
-dataset/: the directory which contain a small subset of the DeepFashion dataset. The full dataset is too large to submit, and we've signed an use agreement with the DeepFashion team so we did not upload all of the data.
+```dataset/```: the directory which will contain the dataset after you finish downloading from both DeepFashion and our Google Drive link.
 
-System tested: Linux (Ubuntu)
+System tested: Linux (Ubuntu 16.04)
