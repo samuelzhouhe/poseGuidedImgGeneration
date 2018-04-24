@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 
 
 # Download dataset and keypoints (Please observe all requirements set by the dataset owner)
-Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html.       
+Download the dataset DeepFashion from http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion.html. (The dataset downloaded will be password-protected, and please kindly contact the owner of this dataset for password)       
 
 Then put the folder ```In-shop Clothes Retrieval Benchmark/``` inside the project directory (```poseGuidedImgGeneration/```), and then rename ```In-shop Clothes Retrieval Benchmark/``` to ```dataset/```. Then extract the ```img.zip``` file in the ```dataset/Img/``` directory.      
 
