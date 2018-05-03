@@ -1,6 +1,8 @@
 # TensorFlow implementation of Pose Guided Person Image Generation (NIPS 2017 paper)
 Link to original paper: https://papers.nips.cc/paper/6644-pose-guided-person-image-generation.pdf
 
+This is an unofficial implementation by Zhou He, Shaopeng Guo, Ziyu Wang and Xinyuan Yu from HKUST.
+
 # Clone this repository
 ```
 git clone https://github.com/samuelzhouhe/poseGuidedImgGeneration.git
