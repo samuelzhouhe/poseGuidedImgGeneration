@@ -38,7 +38,7 @@ for itr in range(10):
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
     for i in range(size):
-        print('writting result to', dir_name, '...')
+        print('writing result to', dir_name, '...')
         name = dir_name + '/sample' + str(i + 1) + 'finalout.jpg'
         scipy.misc.imsave(name, transform(final_output[i]))
         name = dir_name + '/sample' + str(i + 1) + 'g2out.jpg'
